@@ -68,13 +68,13 @@ export default function SOCLayout({ children }: { children: React.ReactNode }) {
     return (
       <div className="min-h-screen bg-background flex items-center justify-center p-4">
         <div className="w-full max-w-md">
-          <div className="text-center mb-8">
-            <div className="flex items-center justify-center gap-3 mb-4">
-              <Shield className="w-10 h-10 text-primary" />
-              <div>
-                <h1 className="text-2xl font-bold text-foreground tracking-tight">NG-SENTRA</h1>
-                <p className="text-xs text-muted-foreground font-mono">SECURITY OPERATIONS CENTER</p>
-              </div>
+          <div className="text-center mb-8 space-y-3">
+            <div className="flex justify-center">
+              <img src="/manus-storage/ng-sentra-logo_fce0144c.png" alt="NG-SENTRA" className="w-20 h-20 object-contain" />
+            </div>
+            <div>
+              <h1 className="text-2xl font-bold text-foreground tracking-tight">NG-SENTRA</h1>
+              <p className="text-xs text-muted-foreground font-mono tracking-widest">SECURITY OPERATIONS CENTER</p>
             </div>
             <p className="text-muted-foreground text-sm">Authentication required to access the SOC dashboard.</p>
           </div>
@@ -98,12 +98,14 @@ export default function SOCLayout({ children }: { children: React.ReactNode }) {
   const Sidebar = ({ mobile = false }: { mobile?: boolean }) => (
     <div className={`flex flex-col h-full ${mobile ? "" : ""}`}>
       {/* Logo */}
-      <div className="flex items-center gap-3 px-4 py-5 border-b border-border">
-        <div className="w-8 h-8 rounded-md bg-primary/20 border border-primary/30 flex items-center justify-center">
-          <Shield className="w-4 h-4 text-primary" />
-        </div>
-        <div>
-          <h1 className="text-sm font-bold text-foreground tracking-widest">NG-SENTRA</h1>
+      <div className="flex items-center gap-2 px-3 py-4 border-b border-border">
+        <img
+          src="/manus-storage/ng-sentra-logo_fce0144c.png"
+          alt="NG-SENTRA Logo"
+          className="w-10 h-10 object-contain flex-shrink-0"
+        />
+        <div className="flex-1 min-w-0">
+          <h1 className="text-sm font-bold text-foreground tracking-widest leading-tight">NG-SENTRA</h1>
           <p className="text-[10px] text-muted-foreground font-mono tracking-wider">SOC DASHBOARD</p>
         </div>
         {mobile && (

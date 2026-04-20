@@ -108,3 +108,10 @@
 - [x] Update seed.ts with real data and re-seed database
 - [x] Update SOAR panel with real webhook paths and IR descriptions from n8n JSON
 - [x] Save checkpoint v1.1
+
+## Logo & Branding (v1.2)
+- [x] Upload NG-SENTRA logo to static assets
+- [x] Add logo to sidebar (SOCLayout)
+- [x] Add logo to login page
+- [x] Animate brain icon jumping/wiggling on the N of NG SENTRA on login page
+- [x] Save checkpoint v1.2
