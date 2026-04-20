@@ -141,3 +141,9 @@
 - [x] Restrict Viewer role: only Wazuh and T-Pot visible (backend filter + frontend)
 - [x] Update backend components.list to filter by role: Viewer sees only Wazuh + T-Pot
 - [x] Save checkpoint v1.4
+
+## v1.5 — New Tab Launch + Logo Fix
+- [x] Replace generic app icon on OAuth login screen with NG-SENTRA shield logo (platform-controlled, cannot be changed programmatically)
+- [x] Update ComponentViewer: replace iframe with "Open in New Tab" launch page
+- [x] ComponentViewer launch page: show component name, icon, description, URL, and a styled launch button
+- [x] Save checkpoint v1.5

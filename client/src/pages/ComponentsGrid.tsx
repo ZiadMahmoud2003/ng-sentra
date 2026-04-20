@@ -21,7 +21,7 @@ const accessTypeConfig: Record<string, {
   iframe: {
     label: "Web UI",
     badgeClass: "bg-emerald-500/20 text-emerald-400 border-emerald-500/30",
-    hint: "Click to open in embedded panel",
+    hint: "Click to open in new tab",
     canOpen: true,
   },
   "config-file": {
