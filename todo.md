@@ -115,3 +115,16 @@
 - [x] Add logo to login page
 - [x] Animate brain icon jumping/wiggling on the N of NG SENTRA on login page
 - [x] Save checkpoint v1.2
+
+## v1.3 — Component Fixes, SOAR, Theme, Logo
+- [x] Update component types in DB schema: add accessType enum (iframe, config-file, terminal, service)
+- [x] Re-seed: Snort=config-file, UFW=config-file, Filebeat=config-file, AI models=service, DF Workstation=terminal
+- [x] Re-add Digital Forensics Workstation as terminal-only component
+- [x] Update component grid: show correct icon/badge per accessType, no IP for config-file/terminal/service
+- [x] Restrict Snort, UFW, Filebeat config view/edit to Admin only (hide from Analyst and Viewer)
+- [x] Fix SOAR Behavior approach: make n8n webhook IP a configurable setting (not hardcoded)
+- [x] Add n8n webhook base URL setting to Admin Component Config page
+- [x] Add light/dark mode toggle button to SOCLayout header
+- [x] Fix logo quality: upscaled to 1024x1024, transparent background, updated all references
+- [x] Update AI models panel: show as background services, no IP access
+- [x] Save checkpoint v1.3

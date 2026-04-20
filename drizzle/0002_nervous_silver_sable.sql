@@ -1,0 +1,2 @@
+ALTER TABLE `components` ADD `accessType` enum('iframe','config-file','terminal','service') DEFAULT 'iframe' NOT NULL;--> statement-breakpoint
+ALTER TABLE `components` ADD `adminOnly` boolean DEFAULT false NOT NULL;

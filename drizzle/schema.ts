@@ -25,6 +25,10 @@ export const components = mysqlTable("components", {
   description: text("description"),
   icon: varchar("icon", { length: 64 }),
   category: varchar("category", { length: 64 }),
+  // How this component is accessed: iframe (web UI), config-file (conf/rules files), terminal (CLI only), service (background service)
+  accessType: mysqlEnum("accessType", ["iframe", "config-file", "terminal", "service"]).default("iframe").notNull(),
+  // If true, only Admin role can see and interact with this component
+  adminOnly: boolean("adminOnly").default(false).notNull(),
   enabled: boolean("enabled").default(true).notNull(),
   createdAt: timestamp("createdAt").defaultNow().notNull(),
   updatedAt: timestamp("updatedAt").defaultNow().onUpdateNow().notNull(),

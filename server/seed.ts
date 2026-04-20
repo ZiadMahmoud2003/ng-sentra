@@ -1,13 +1,18 @@
+/**
+ * NG-SENTRA Seed Script v1.3
+ * Seeds 7 components (incl. Digital Forensics Workstation), 5 SOAR approaches, 4 AI models.
+ * IP: 192.168.1.14 — all ports are defaults.
+ * Run: npx tsx server/seed.ts
+ */
 import { drizzle } from "drizzle-orm/mysql2";
 import { components, soarApproaches, aiModels } from "../drizzle/schema";
 
-// Real infrastructure: IP 192.168.1.14, default ports
 const HOST = "192.168.1.14";
 
 async function seed() {
   const db = drizzle(process.env.DATABASE_URL!);
 
-  // ── 6 actual SOC components (no AI model services, no DF Workstation) ──────
+  // ── Components ──────────────────────────────────────────────────────────────
   const componentData = [
     {
       name: "Wazuh",
@@ -17,26 +22,32 @@ async function seed() {
       category: "SIEM",
       url: `https://${HOST}`,
       port: 443,
+      accessType: "iframe" as const,
+      adminOnly: false,
       enabled: true,
     },
     {
       name: "Snort",
       slug: "snort",
-      description: "Network IDS running inside the Wazuh Docker stack. Logs forwarded to Wazuh via snort_to_wazuh.py. No standalone web UI.",
+      description: "Network IDS running inside the Wazuh Docker stack. Managed via configuration files and rules — no web UI. Logs forwarded to Wazuh via snort_to_wazuh.py.",
       icon: "Eye",
-      category: "IDS",
-      url: null,       // CLI/log-only — no web UI
+      category: "IDS/IPS",
+      url: null,
       port: null,
+      accessType: "config-file" as const,
+      adminOnly: true,
       enabled: true,
     },
     {
       name: "UFW",
       slug: "ufw",
-      description: "Host-level firewall on the VirtualBox machine. Blocks IPs via SSH commands triggered by n8n IR workflows. No web UI.",
+      description: "Host-level firewall on the VirtualBox machine. Managed via configuration files and CLI rules — no web UI. IPs blocked automatically by n8n IR workflows via SSH.",
       icon: "Lock",
       category: "Firewall",
-      url: null,       // CLI-only — no web UI
+      url: null,
       port: null,
+      accessType: "config-file" as const,
+      adminOnly: true,
       enabled: true,
     },
     {
@@ -47,16 +58,20 @@ async function seed() {
       category: "Honeypot",
       url: `https://${HOST}:64297`,
       port: 64297,
+      accessType: "iframe" as const,
+      adminOnly: false,
       enabled: true,
     },
     {
       name: "Filebeat",
       slug: "filebeat",
-      description: "Dedicated log shipper (v7.10.2 OSS) at /opt/filebeat-honeypot. Routes T-Pot honeypot logs directly to the Wazuh Indexer.",
+      description: "Dedicated log shipper (v7.10.2 OSS) at /opt/filebeat-honeypot. Routes T-Pot honeypot logs to the Wazuh Indexer. Runs as a background service — managed via configuration files.",
       icon: "FileText",
       category: "Log Shipper",
-      url: null,       // Background service — no web UI
+      url: null,
       port: 5044,
+      accessType: "config-file" as const,
+      adminOnly: true,
       enabled: true,
     },
     {
@@ -67,6 +82,20 @@ async function seed() {
       category: "SOAR",
       url: `http://${HOST}:5678`,
       port: 5678,
+      accessType: "iframe" as const,
+      adminOnly: false,
+      enabled: true,
+    },
+    {
+      name: "Digital Forensics Workstation",
+      slug: "digital-forensics",
+      description: "Forensic analysis workstation for disk imaging, memory analysis, and artifact examination. Accessed via terminal/SSH — no web UI. Tools include Autopsy, Volatility, and custom forensic scripts.",
+      icon: "Search",
+      category: "Forensics",
+      url: null,
+      port: null,
+      accessType: "terminal" as const,
+      adminOnly: false,
       enabled: true,
     },
   ];
@@ -77,13 +106,16 @@ async function seed() {
         description: comp.description,
         url: comp.url,
         port: comp.port,
+        accessType: comp.accessType,
+        adminOnly: comp.adminOnly,
         enabled: comp.enabled,
       },
     });
   }
-  console.log("✅ Components seeded (6 real components)");
+  console.log("✅ Components seeded (7 components):", componentData.map(c => c.name).join(", "));
 
-  // ── 5 SOAR IR Approaches (from NG-SENTRA.json analysis) ──────────────────
+  // ── SOAR Approaches ─────────────────────────────────────────────────────────
+  // Behavior webhookUrl is null — configurable via Admin → Component Config
   const soarData = [
     {
       name: "IP",
@@ -95,8 +127,8 @@ async function seed() {
     {
       name: "Behavior",
       slug: "behavior",
-      description: "Schedule-based behavioral analysis. Polls Wazuh every few seconds, enriches with UBA model (historical IP profiles + previous UFW actions), runs IR decision via SSH, and escalates to Gemini AI for report generation.",
-      webhookUrl: null, // Schedule-triggered, no external webhook
+      description: "Schedule-based behavioral analysis. Polls Wazuh every few seconds, enriches with UBA model (historical IP profiles + previous UFW actions), runs IR decision via SSH, and escalates to Gemini AI for report generation. n8n webhook IP is configurable via Admin settings.",
+      webhookUrl: null, // Configurable — set via Admin UI
       enabled: true,
     },
     {
@@ -117,7 +149,7 @@ async function seed() {
       name: "URL scheduled",
       slug: "url-scheduled",
       description: "Scheduled DNS log analysis (every 1 minute). Queries Wazuh Elasticsearch for DNS/HTTP hostnames from the last 6 hours, checks each domain against VirusTotal + Local AI Brain, and sends email reports for malicious findings.",
-      webhookUrl: null, // Schedule-triggered (1-min interval), no external webhook
+      webhookUrl: null, // Schedule-triggered — no external webhook
       enabled: true,
     },
   ];
@@ -131,10 +163,9 @@ async function seed() {
       },
     });
   }
-  console.log("✅ SOAR approaches seeded (5 IR workflows)");
+  console.log("✅ SOAR approaches seeded:", soarData.map(a => a.name).join(", "));
 
-  // ── AI Models: reflect the actual AI integrations used inside n8n ─────────
-  // These are not standalone services but AI integrations wired into n8n workflows
+  // ── AI Models ───────────────────────────────────────────────────────────────
   const aiModelData = [
     {
       name: "Anomaly Detection",
@@ -174,13 +205,13 @@ async function seed() {
       },
     });
   }
-  console.log("✅ AI models seeded (4 n8n-integrated AI services)");
+  console.log("✅ AI models seeded:", aiModelData.map(m => m.name).join(", "));
 
-  console.log("\n🎯 Seed complete — NG-SENTRA configured for 192.168.1.14");
+  console.log("\n🎯 Seed complete — NG-SENTRA v1.3 configured for", HOST);
   process.exit(0);
 }
 
-seed().catch((err) => {
+seed().catch(err => {
   console.error("Seed failed:", err);
   process.exit(1);
 });

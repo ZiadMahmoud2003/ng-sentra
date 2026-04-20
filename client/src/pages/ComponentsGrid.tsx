@@ -1,137 +1,201 @@
+import { useAuth } from "@/_core/hooks/useAuth";
 import { trpc } from "@/lib/trpc";
-import { Badge } from "@/components/ui/badge";
-import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import {
-  Activity, AlertTriangle, Brain, Bug, Eye, FileText, Globe,
-  HardDrive, Lock, Shield, Users, Zap, ExternalLink, Settings
+  AlertTriangle, Bug, Eye, FileText, Globe,
+  Lock, Search, Shield, Terminal, Zap, Settings, Server
 } from "lucide-react";
 import { useLocation } from "wouter";
 
 const iconMap: Record<string, any> = {
-  Shield, Eye, Lock, Bug, FileText, Activity, AlertTriangle, Users, Globe, Zap, HardDrive, Brain, Settings
+  Shield, Eye, Lock, Bug, FileText, Zap, Search,
+  Terminal, Server, Globe, Settings, AlertTriangle,
+};
+
+const accessTypeConfig: Record<string, {
+  label: string;
+  badgeClass: string;
+  hint: string;
+  canOpen: boolean;
+}> = {
+  iframe: {
+    label: "Web UI",
+    badgeClass: "bg-emerald-500/20 text-emerald-400 border-emerald-500/30",
+    hint: "Click to open in embedded panel",
+    canOpen: true,
+  },
+  "config-file": {
+    label: "Config Files",
+    badgeClass: "bg-orange-500/20 text-orange-400 border-orange-500/30",
+    hint: "Managed via SSH / configuration files",
+    canOpen: false,
+  },
+  terminal: {
+    label: "Terminal / SSH",
+    badgeClass: "bg-purple-500/20 text-purple-400 border-purple-500/30",
+    hint: "Accessed via terminal or SSH",
+    canOpen: false,
+  },
+  service: {
+    label: "Background Service",
+    badgeClass: "bg-blue-500/20 text-blue-400 border-blue-500/30",
+    hint: "Runs as a background service",
+    canOpen: false,
+  },
 };
 
 const categoryColors: Record<string, string> = {
-  SIEM: "text-cyan-400 bg-cyan-400/10 border-cyan-400/30",
-  IDS: "text-blue-400 bg-blue-400/10 border-blue-400/30",
-  Firewall: "text-orange-400 bg-orange-400/10 border-orange-400/30",
-  Honeypot: "text-yellow-400 bg-yellow-400/10 border-yellow-400/30",
-  "Log Shipper": "text-purple-400 bg-purple-400/10 border-purple-400/30",
-  "AI Model": "text-emerald-400 bg-emerald-400/10 border-emerald-400/30",
-  "Threat Intel": "text-red-400 bg-red-400/10 border-red-400/30",
-  SOAR: "text-pink-400 bg-pink-400/10 border-pink-400/30",
-  Forensics: "text-indigo-400 bg-indigo-400/10 border-indigo-400/30",
+  SIEM: "text-cyan-400",
+  "IDS/IPS": "text-orange-400",
+  Firewall: "text-red-400",
+  Honeypot: "text-yellow-400",
+  "Log Shipper": "text-blue-400",
+  SOAR: "text-emerald-400",
+  Forensics: "text-purple-400",
 };
 
-const tileGradients = [
-  "from-cyan-500/10 to-transparent",
-  "from-blue-500/10 to-transparent",
-  "from-orange-500/10 to-transparent",
-  "from-yellow-500/10 to-transparent",
-  "from-purple-500/10 to-transparent",
-  "from-emerald-500/10 to-transparent",
-  "from-emerald-500/10 to-transparent",
-  "from-emerald-500/10 to-transparent",
-  "from-red-500/10 to-transparent",
-  "from-pink-500/10 to-transparent",
-  "from-indigo-500/10 to-transparent",
-];
-
 export default function ComponentsGrid() {
+  const { user } = useAuth();
   const [, navigate] = useLocation();
   const { data: components, isLoading } = trpc.components.list.useQuery();
 
-  if (isLoading) {
-    return (
-      <div className="space-y-6">
-        <div>
-          <h1 className="text-2xl font-bold text-foreground">Components</h1>
-          <p className="text-muted-foreground text-sm mt-1">Select a component to open its interface</p>
-        </div>
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-          {Array.from({ length: 6 }).map((_, i) => (
-            <div key={i} className="h-44 bg-card border border-border rounded-lg animate-pulse" />
-          ))}
-        </div>
-      </div>
-    );
-  }
+  const isAdmin = user?.role === "Admin" || user?.role === "admin";
+
+  // Hide adminOnly components from non-admin users
+  const visibleComponents = (components ?? []).filter(c => !c.adminOnly || isAdmin);
+
+  const handleClick = (comp: any) => {
+    const cfg = accessTypeConfig[comp.accessType ?? "iframe"];
+    if (cfg?.canOpen) navigate(`/components/${comp.slug}`);
+  };
 
   return (
     <div className="space-y-6">
-      <div className="flex items-start justify-between">
-        <div>
-          <h1 className="text-2xl font-bold text-foreground">Components</h1>
-          <p className="text-muted-foreground text-sm mt-1">
-            {components?.length ?? 0} components — click any tile to open its interface
-          </p>
-        </div>
+      {/* Header */}
+      <div>
+        <h1 className="text-2xl font-bold text-foreground flex items-center gap-3">
+          <Shield className="w-6 h-6 text-primary" />
+          SOC Components
+        </h1>
+        <p className="text-muted-foreground text-sm mt-1">
+          {visibleComponents.length} component{visibleComponents.length !== 1 ? "s" : ""} in your security stack
+          {!isAdmin && (
+            <span className="ml-2 text-[10px] text-muted-foreground/50 font-mono">(admin-only components hidden)</span>
+          )}
+        </p>
       </div>
 
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-        {(components ?? []).map((comp, idx) => {
-          const Icon = iconMap[comp.icon ?? "Shield"] ?? Shield;
-          const catColor = categoryColors[comp.category ?? ""] ?? "text-slate-400 bg-slate-400/10 border-slate-400/30";
-          const gradient = tileGradients[idx % tileGradients.length];
-          const isConfigured = !!comp.url;
+      {/* Access type legend */}
+      <div className="flex flex-wrap gap-2">
+        {Object.entries(accessTypeConfig).map(([type, cfg]) => (
+          <span key={type} className={`text-[10px] font-mono px-2 py-0.5 rounded border ${cfg.badgeClass}`}>
+            {cfg.label}
+          </span>
+        ))}
+      </div>
 
-          return (
-            <Card
-              key={comp.id}
-              className={`bg-card border-border relative overflow-hidden cursor-pointer group transition-all duration-200 hover:border-primary/50 hover:shadow-lg hover:shadow-primary/10 ${!comp.enabled ? "opacity-50" : ""}`}
-              onClick={() => isConfigured && navigate(`/components/${comp.slug}`)}
-            >
-              <div className={`absolute inset-0 bg-gradient-to-br ${gradient} pointer-events-none transition-opacity group-hover:opacity-150`} />
-              <CardContent className="p-4 relative">
-                {/* Header */}
-                <div className="flex items-start justify-between mb-3">
-                  <div className={`w-10 h-10 rounded-lg border flex items-center justify-center ${catColor}`}>
-                    <Icon className="w-5 h-5" />
+      {/* Grid */}
+      {isLoading ? (
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
+          {Array.from({ length: 7 }).map((_, i) => (
+            <div key={i} className="h-48 rounded-xl bg-muted/30 animate-pulse border border-border" />
+          ))}
+        </div>
+      ) : (
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
+          {visibleComponents.map(comp => {
+            const Icon = iconMap[comp.icon ?? "Shield"] ?? Shield;
+            const atCfg = accessTypeConfig[comp.accessType ?? "iframe"] ?? accessTypeConfig.iframe;
+            const catColor = categoryColors[comp.category ?? ""] ?? "text-muted-foreground";
+            const clickable = atCfg.canOpen && comp.enabled;
+
+            return (
+              <Card
+                key={comp.id}
+                onClick={() => handleClick(comp)}
+                className={`bg-card border-border relative overflow-hidden transition-all duration-200 group ${
+                  clickable
+                    ? "cursor-pointer hover:border-primary/50 hover:shadow-lg hover:shadow-primary/10 hover:-translate-y-0.5"
+                    : "cursor-default"
+                } ${!comp.enabled ? "opacity-60" : ""}`}
+              >
+                {/* Top accent */}
+                <div className={`absolute top-0 left-0 right-0 h-0.5 ${
+                  comp.enabled ? "bg-gradient-to-r from-primary/50 to-transparent" : "bg-muted/20"
+                }`} />
+
+                <CardContent className="p-5 space-y-3">
+                  {/* Icon row */}
+                  <div className="flex items-start justify-between">
+                    <div className={`w-11 h-11 rounded-lg border flex items-center justify-center transition-colors ${
+                      clickable
+                        ? "bg-primary/10 border-primary/20 group-hover:bg-primary/20"
+                        : "bg-muted/30 border-border"
+                    }`}>
+                      <Icon className={`w-5 h-5 ${clickable ? "text-primary" : "text-muted-foreground"}`} />
+                    </div>
+                    <div className="flex flex-col items-end gap-1">
+                      <span className={`w-2 h-2 rounded-full ${
+                        comp.enabled
+                          ? "bg-emerald-400 shadow-[0_0_6px_rgba(52,211,153,0.8)] animate-pulse"
+                          : "bg-slate-500"
+                      }`} />
+                      {comp.adminOnly && (
+                        <span className="text-[9px] font-mono px-1.5 py-0.5 rounded border bg-red-500/10 text-red-400 border-red-500/20">
+                          ADMIN
+                        </span>
+                      )}
+                    </div>
                   </div>
-                  <div className="flex items-center gap-1.5">
-                    <span className={`w-2 h-2 rounded-full flex-shrink-0 ${isConfigured && comp.enabled ? "bg-emerald-400 animate-pulse shadow-[0_0_6px_rgba(52,211,153,0.8)]" : "bg-slate-500"}`} />
-                    {!comp.enabled && (
-                      <span className="text-[10px] font-mono text-muted-foreground">DISABLED</span>
+
+                  {/* Name + category */}
+                  <div>
+                    <h3 className="font-semibold text-foreground text-sm leading-tight">{comp.name}</h3>
+                    <p className={`text-[10px] font-mono mt-0.5 ${catColor}`}>{comp.category}</p>
+                  </div>
+
+                  {/* Description */}
+                  <p className="text-[11px] text-muted-foreground leading-relaxed line-clamp-2">
+                    {comp.description}
+                  </p>
+
+                  {/* Access type badge */}
+                  <div className="space-y-1">
+                    <span className={`inline-block text-[10px] font-mono px-1.5 py-0.5 rounded border ${atCfg.badgeClass}`}>
+                      {atCfg.label}
+                    </span>
+                    {comp.url ? (
+                      <p className="text-[10px] font-mono text-muted-foreground/60 truncate">{comp.url}</p>
+                    ) : comp.port ? (
+                      <p className="text-[10px] font-mono text-muted-foreground/50">Port: {comp.port}</p>
+                    ) : (
+                      <p className="text-[10px] font-mono text-muted-foreground/40 italic">{atCfg.hint}</p>
                     )}
                   </div>
-                </div>
 
-                {/* Name & Category */}
-                <h3 className="font-semibold text-foreground text-sm leading-tight mb-1">{comp.name}</h3>
-                <span className={`text-[10px] font-mono px-1.5 py-0.5 rounded border ${catColor}`}>
-                  {comp.category}
-                </span>
+                  {/* Action hint */}
+                  <p className={`text-[10px] font-mono ${clickable ? "text-primary/60 group-hover:text-primary/80" : "text-muted-foreground/30 italic"}`}>
+                    {clickable ? "Click to open →" : atCfg.hint}
+                  </p>
+                </CardContent>
+              </Card>
+            );
+          })}
+        </div>
+      )}
 
-                {/* Description */}
-                <p className="text-xs text-muted-foreground mt-2 line-clamp-2 leading-relaxed">
-                  {comp.description}
-                </p>
-
-                {/* Footer */}
-                <div className="mt-3 flex items-center justify-between">
-                  {isConfigured ? (
-                    <span className="text-[10px] font-mono text-muted-foreground">
-                      :{comp.port ?? "—"}
-                    </span>
-                  ) : (
-                    <span className="text-[10px] font-mono text-orange-400/80">Not configured</span>
-                  )}
-                  <Button
-                    size="sm"
-                    variant={isConfigured ? "default" : "outline"}
-                    className="h-6 text-[10px] px-2 font-mono"
-                    disabled={!isConfigured || !comp.enabled}
-                    onClick={e => { e.stopPropagation(); if (isConfigured) navigate(`/components/${comp.slug}`); }}
-                  >
-                    {isConfigured ? <><ExternalLink className="w-3 h-3 mr-1" />OPEN</> : "CLI ONLY"}
-                  </Button>
-                </div>
-              </CardContent>
-            </Card>
-          );
-        })}
-      </div>
+      {/* Info note for non-admins */}
+      {!isAdmin && (
+        <div className="flex items-start gap-3 p-3 bg-orange-500/5 border border-orange-500/20 rounded-lg">
+          <AlertTriangle className="w-4 h-4 text-orange-400 flex-shrink-0 mt-0.5" />
+          <p className="text-xs text-muted-foreground">
+            <span className="text-orange-400 font-mono font-semibold">Snort</span>,{" "}
+            <span className="text-orange-400 font-mono font-semibold">UFW</span>, and{" "}
+            <span className="text-orange-400 font-mono font-semibold">Filebeat</span> are Admin-only components
+            managed via configuration files. Contact your administrator for access.
+          </p>
+        </div>
+      )}
     </div>
   );
 }

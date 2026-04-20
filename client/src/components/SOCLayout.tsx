@@ -4,10 +4,11 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import {
   Activity, AlertTriangle, Brain, ChevronRight, Globe, HardDrive,
-  LayoutDashboard, LogOut, Menu, Settings, Shield, Users, Zap, X
+  LayoutDashboard, LogOut, Menu, Moon, Settings, Shield, Sun, Users, Zap, X
 } from "lucide-react";
 import { useState } from "react";
 import { Link, useLocation } from "wouter";
+import { useTheme } from "../contexts/ThemeContext";
 
 const navItems = [
   { href: "/", label: "Dashboard", icon: LayoutDashboard },
@@ -52,6 +53,7 @@ export default function SOCLayout({ children }: { children: React.ReactNode }) {
   const { user, loading, isAuthenticated, logout } = useAuth();
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [, navigate] = useLocation();
+  const { theme, toggleTheme } = useTheme();
 
   if (loading) {
     return (
@@ -70,7 +72,7 @@ export default function SOCLayout({ children }: { children: React.ReactNode }) {
         <div className="w-full max-w-md">
           <div className="text-center mb-8 space-y-3">
             <div className="flex justify-center">
-              <img src="/manus-storage/ng-sentra-logo_fce0144c.png" alt="NG-SENTRA" className="w-20 h-20 object-contain" />
+              <img src="/manus-storage/ng-sentra-logo-hq_d96a9866.png" alt="NG-SENTRA" className="w-20 h-20 object-contain" />
             </div>
             <div>
               <h1 className="text-2xl font-bold text-foreground tracking-tight">NG-SENTRA</h1>
@@ -100,7 +102,7 @@ export default function SOCLayout({ children }: { children: React.ReactNode }) {
       {/* Logo */}
       <div className="flex items-center gap-2 px-3 py-4 border-b border-border">
         <img
-          src="/manus-storage/ng-sentra-logo_fce0144c.png"
+          src="/manus-storage/ng-sentra-logo-hq_d96a9866.png"
           alt="NG-SENTRA Logo"
           className="w-10 h-10 object-contain flex-shrink-0"
         />
@@ -181,7 +183,16 @@ export default function SOCLayout({ children }: { children: React.ReactNode }) {
             <span>SYSTEM ONLINE</span>
           </div>
           <div className="w-px h-4 bg-border" />
-          <span className="text-xs text-muted-foreground font-mono">{new Date().toLocaleDateString()}</span>
+          <span className="text-xs text-muted-foreground font-mono hidden sm:block">{new Date().toLocaleDateString()}</span>
+          <div className="w-px h-4 bg-border" />
+          {/* Light / Dark mode toggle */}
+          <button
+            onClick={toggleTheme}
+            title={theme === "dark" ? "Switch to light mode" : "Switch to dark mode"}
+            className="w-7 h-7 rounded-md border border-border flex items-center justify-center text-muted-foreground hover:text-foreground hover:bg-muted/50 transition-colors"
+          >
+            {theme === "dark" ? <Sun className="w-3.5 h-3.5" /> : <Moon className="w-3.5 h-3.5" />}
+          </button>
         </header>
 
         {/* Page Content */}

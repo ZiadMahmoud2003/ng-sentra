@@ -35,7 +35,7 @@ export default function LoginPage() {
           {/* Logo image */}
           <div className="flex justify-center">
             <img
-              src="/manus-storage/ng-sentra-logo_fce0144c.png"
+              src="/manus-storage/ng-sentra-logo-hq_d96a9866.png"
               alt="NG-SENTRA Logo"
               className="w-32 h-32 object-contain drop-shadow-[0_0_20px_rgba(0,200,255,0.3)]"
             />

@@ -5,7 +5,7 @@ import { Button } from "@/components/ui/button";
 import { toast } from "sonner";
 import {
   Activity, AlertTriangle, Brain, Globe, Users, Zap,
-  Link, Terminal, Workflow, RefreshCw
+  Link, Terminal, Workflow, RefreshCw, Server, Lock
 } from "lucide-react";
 
 const modelIcons: Record<string, any> = {
@@ -115,11 +115,10 @@ export default function AIModelsPanel() {
       <div className="flex items-start gap-3 p-3 bg-primary/5 border border-primary/20 rounded-lg text-xs text-muted-foreground">
         <Workflow className="w-4 h-4 text-primary flex-shrink-0 mt-0.5" />
         <p>
-          These AI services are integrated into your <span className="text-primary font-mono">n8n SOAR</span> workflows at{" "}
-          <code className="text-primary/80 font-mono">192.168.1.14:5678</code>. The Local AI Brain and UBA
-          services run locally at <code className="text-primary/80 font-mono">192.168.1.14:5000</code> via
-          Waitress. Alert Classification uses Google Gemini 2.5 Flash via the n8n Google AI node.
-          Status reflects the last known state — update manually or via your monitoring scripts.
+          These AI services run as <span className="text-primary font-mono">background services</span> on your VirtualBox environment — they have no direct web UI and cannot be accessed via browser. They are invoked exclusively by your{" "}
+            <span className="text-primary font-mono">n8n SOAR</span> workflows. The Local AI Brain and UBA
+            services run locally via Waitress (port 5000). Alert Classification uses Google Gemini 2.5 Flash via the n8n Google AI node.
+            Status reflects the last known state — update manually or via your monitoring scripts.
         </p>
       </div>
 
@@ -157,18 +156,27 @@ export default function AIModelsPanel() {
                 {/* Description */}
                 <p className="text-xs text-muted-foreground leading-relaxed">{model.description}</p>
 
-                {/* Endpoint */}
-                <div className="space-y-1">
-                  <p className="text-[10px] font-mono text-muted-foreground/60 uppercase tracking-wider flex items-center gap-1">
-                    <Link className="w-3 h-3" /> Endpoint
-                  </p>
-                  <div className="flex items-center gap-2 bg-muted/30 rounded px-2 py-1.5 border border-border">
-                    <Terminal className="w-3 h-3 text-muted-foreground flex-shrink-0" />
-                    <code className="text-[10px] font-mono text-primary/80 truncate">
-                      {model.endpointUrl ?? "Not configured"}
-                    </code>
-                  </div>
+                {/* Service Type Banner */}
+                <div className="flex items-center gap-2 bg-slate-500/10 border border-slate-500/20 rounded px-2 py-1.5">
+                  <Server className="w-3 h-3 text-slate-400 flex-shrink-0" />
+                  <span className="text-[10px] font-mono text-slate-400">Background Service — No Web UI</span>
+                  <Lock className="w-3 h-3 text-slate-500 ml-auto" />
                 </div>
+
+                {/* Internal Endpoint (info only, not clickable) */}
+                {model.endpointUrl && (
+                  <div className="space-y-1">
+                    <p className="text-[10px] font-mono text-muted-foreground/60 uppercase tracking-wider flex items-center gap-1">
+                      <Link className="w-3 h-3" /> Internal Endpoint (n8n use only)
+                    </p>
+                    <div className="flex items-center gap-2 bg-muted/30 rounded px-2 py-1.5 border border-border">
+                      <Terminal className="w-3 h-3 text-muted-foreground flex-shrink-0" />
+                      <code className="text-[10px] font-mono text-muted-foreground truncate">
+                        {model.endpointUrl}
+                      </code>
+                    </div>
+                  </div>
+                )}
 
                 {/* Technology stack */}
                 {tech.length > 0 && (

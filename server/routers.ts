@@ -59,7 +59,10 @@ export const appRouter = router({
   // ─── Components ────────────────────────────────────────────────────────────
   components: router({
     list: protectedProcedure.query(async ({ ctx }) => {
-      return getAllComponents();
+      const all = await getAllComponents();
+      const isAdmin = ctx.user?.role === "Admin" || ctx.user?.role === "admin";
+      // Non-admins cannot see adminOnly components (Snort, UFW, Filebeat)
+      return isAdmin ? all : all.filter((c: any) => !c.adminOnly);
     }),
 
     update: adminProcedure

@@ -1,13 +1,15 @@
-import { useAuth } from "@/_core/hooks/useAuth";
 import { trpc } from "@/lib/trpc";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { toast } from "sonner";
+import { useState } from "react";
+import { Input } from "@/components/ui/input";
+import { useAuth } from "@/_core/hooks/useAuth";
 import {
   Activity, AlertTriangle, Clock, FileText, Globe, Play,
   Shield, Zap, Link, Terminal, CalendarClock, Webhook,
-  Brain, Mail, Eye
+  Brain, Mail, Eye, Pencil, Save, X
 } from "lucide-react";
 
 const approachIcons: Record<string, any> = {
@@ -77,6 +79,26 @@ export default function SOARPanel() {
   });
 
   const isAnalystOrAdmin = ["Admin", "admin", "Analyst"].includes(user?.role ?? "");
+  const isAdmin = user?.role === "Admin" || user?.role === "admin";
+
+  // Behavior webhook IP — editable by Admin
+  const behaviorApproach = (approaches ?? []).find(a => a.slug === "behavior");
+  const [editingBehaviorIp, setEditingBehaviorIp] = useState(false);
+  const [behaviorWebhookUrl, setBehaviorWebhookUrl] = useState("");
+
+  const updateSoarMutation = trpc.soar.update.useMutation({
+    onSuccess: () => {
+      toast.success("Behavior webhook URL updated");
+      setEditingBehaviorIp(false);
+      refetch();
+    },
+    onError: (e) => toast.error(`Update failed: ${e.message}`),
+  });
+
+  const saveBehaviorWebhook = () => {
+    if (!behaviorApproach) return;
+    updateSoarMutation.mutate({ id: behaviorApproach.id, webhookUrl: behaviorWebhookUrl || undefined });
+  };
 
   const totalTriggers = (approaches ?? []).reduce((sum, a) => sum + (a.triggerCount ?? 0), 0);
   const activeApproaches = (approaches ?? []).filter(a => a.enabled).length;
@@ -95,6 +117,43 @@ export default function SOARPanel() {
             Incident Response automation — 5 workflows running on n8n at{" "}
             <code className="text-primary/80 font-mono text-xs">192.168.1.14:5678</code>
           </p>
+          {/* Behavior webhook IP config for Admin */}
+          {isAdmin && behaviorApproach && (
+            <div className="mt-3 p-3 bg-purple-500/5 border border-purple-500/20 rounded-lg">
+              <p className="text-[10px] font-mono text-purple-400 uppercase tracking-wider mb-2 flex items-center gap-1">
+                <Webhook className="w-3 h-3" /> Behavior IR — Configurable Webhook URL
+              </p>
+              {editingBehaviorIp ? (
+                <div className="flex items-center gap-2">
+                  <Input
+                    value={behaviorWebhookUrl}
+                    onChange={e => setBehaviorWebhookUrl(e.target.value)}
+                    placeholder="http://192.168.1.14:5678/webhook/behavior"
+                    className="h-7 text-xs font-mono flex-1"
+                  />
+                  <Button size="sm" className="h-7 px-2" onClick={saveBehaviorWebhook} disabled={updateSoarMutation.isPending}>
+                    <Save className="w-3 h-3" />
+                  </Button>
+                  <Button size="sm" variant="outline" className="h-7 px-2" onClick={() => setEditingBehaviorIp(false)}>
+                    <X className="w-3 h-3" />
+                  </Button>
+                </div>
+              ) : (
+                <div className="flex items-center gap-2">
+                  <code className="text-[10px] font-mono text-muted-foreground flex-1">
+                    {behaviorApproach.webhookUrl ?? "Not configured — schedule-only"}
+                  </code>
+                  <Button
+                    size="sm" variant="outline"
+                    className="h-6 px-2 text-[10px] font-mono border-purple-500/30 text-purple-400 hover:bg-purple-500/10"
+                    onClick={() => { setBehaviorWebhookUrl(behaviorApproach.webhookUrl ?? ""); setEditingBehaviorIp(true); }}
+                  >
+                    <Pencil className="w-3 h-3 mr-1" /> Edit
+                  </Button>
+                </div>
+              )}
+            </div>
+          )}
         </div>
       </div>
 
