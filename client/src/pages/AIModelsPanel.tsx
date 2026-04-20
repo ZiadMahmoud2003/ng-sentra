@@ -3,7 +3,10 @@ import { trpc } from "@/lib/trpc";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { toast } from "sonner";
-import { Activity, AlertTriangle, Brain, CheckCircle2, Clock, Globe, Users, XCircle } from "lucide-react";
+import {
+  Activity, AlertTriangle, Brain, Globe, Users, Zap,
+  Link, Terminal, Workflow, RefreshCw
+} from "lucide-react";
 
 const modelIcons: Record<string, any> = {
   "anomaly-detection": Activity,
@@ -13,24 +16,42 @@ const modelIcons: Record<string, any> = {
 };
 
 const statusConfig: Record<string, { label: string; color: string; dot: string }> = {
-  running: { label: "RUNNING", color: "text-emerald-400", dot: "bg-emerald-400 animate-pulse shadow-[0_0_6px_rgba(52,211,153,0.8)]" },
-  stopped: { label: "STOPPED", color: "text-red-400", dot: "bg-red-500" },
-  error: { label: "ERROR", color: "text-orange-400", dot: "bg-orange-500 animate-pulse" },
-  unknown: { label: "UNKNOWN", color: "text-slate-400", dot: "bg-slate-500" },
+  running: { label: "RUNNING",  color: "text-emerald-400", dot: "bg-emerald-400 animate-pulse shadow-[0_0_6px_rgba(52,211,153,0.8)]" },
+  stopped: { label: "STOPPED",  color: "text-red-400",     dot: "bg-red-500" },
+  error:   { label: "ERROR",    color: "text-orange-400",  dot: "bg-orange-500 animate-pulse" },
+  unknown: { label: "UNKNOWN",  color: "text-slate-400",   dot: "bg-slate-500" },
 };
 
 const modelGradients: Record<string, string> = {
-  "anomaly-detection": "from-cyan-500/10",
-  "alert-classification": "from-orange-500/10",
-  uba: "from-purple-500/10",
-  "local-ti": "from-red-500/10",
+  "anomaly-detection":   "from-cyan-500/10",
+  "alert-classification":"from-orange-500/10",
+  uba:                   "from-purple-500/10",
+  "local-ti":            "from-red-500/10",
+};
+
+// Which n8n IR workflows each AI model is used in
+const modelWorkflows: Record<string, string[]> = {
+  "anomaly-detection":    ["IP (wazuh-realtime)", "Behavior (scheduled)", "URL scheduled"],
+  "alert-classification": ["IP", "File", "URL real-time", "URL scheduled"],
+  uba:                    ["Behavior (scheduled)"],
+  "local-ti":             ["IP", "File", "URL real-time", "URL scheduled"],
+};
+
+// Technology stack per model
+const modelTech: Record<string, string[]> = {
+  "anomaly-detection":    ["Isolation Forest", "Behavioral Baselines", "REST API (Waitress)"],
+  "alert-classification": ["Gemini 2.5 Flash", "Google AI Studio", "HTML Report Generation"],
+  uba:                    ["Historical IP Profiles", "UFW Action History", "REST API"],
+  "local-ti":             ["Local AI Brain", "Threat Scoring", "REST API (port 5000)", "Waitress Server"],
 };
 
 export default function AIModelsPanel() {
   const { user } = useAuth();
-  const { data: models, refetch } = trpc.aiModels.list.useQuery(undefined, { refetchInterval: 60_000 });
+  const { data: models, refetch, isLoading } = trpc.aiModels.list.useQuery(undefined, {
+    refetchInterval: 60_000,
+  });
   const updateMutation = trpc.aiModels.update.useMutation({
-    onSuccess: () => { toast.success("AI model updated"); refetch(); },
+    onSuccess: () => { toast.success("AI model status updated"); refetch(); },
     onError: (e) => toast.error(`Update failed: ${e.message}`),
   });
 
@@ -43,39 +64,73 @@ export default function AIModelsPanel() {
     updateMutation.mutate({ id: model.id, status: next });
   };
 
+  const runningCount = (models ?? []).filter(m => m.status === "running").length;
+  const errorCount   = (models ?? []).filter(m => m.status === "error").length;
+  const unknownCount = (models ?? []).filter(m => m.status === "unknown").length;
+
   return (
     <div className="space-y-6">
-      <div>
-        <h1 className="text-2xl font-bold text-foreground flex items-center gap-3">
-          <Brain className="w-6 h-6 text-emerald-400" />
-          AI Models Status
-        </h1>
-        <p className="text-muted-foreground text-sm mt-1">
-          Live health and output summaries for the 4 AI security services — auto-refreshes every 1 minute
-        </p>
+      {/* Header */}
+      <div className="flex items-start justify-between">
+        <div>
+          <h1 className="text-2xl font-bold text-foreground flex items-center gap-3">
+            <Brain className="w-6 h-6 text-emerald-400" />
+            AI Models Status
+          </h1>
+          <p className="text-muted-foreground text-sm mt-1">
+            4 AI services integrated into n8n SOAR workflows — auto-refreshes every 1 minute
+          </p>
+        </div>
+        <Button
+          size="sm"
+          variant="outline"
+          className="h-8 text-xs font-mono border-border text-muted-foreground hover:text-foreground gap-1.5"
+          onClick={() => refetch()}
+          disabled={isLoading}
+        >
+          <RefreshCw className={`w-3 h-3 ${isLoading ? "animate-spin" : ""}`} />
+          Refresh
+        </Button>
       </div>
 
       {/* Status Summary Bar */}
-      <div className="flex items-center gap-6 p-3 bg-muted/20 border border-border rounded-lg text-xs font-mono">
-        {(["running", "stopped", "error", "unknown"] as const).map(status => {
-          const count = (models ?? []).filter(m => m.status === status).length;
-          const cfg = statusConfig[status];
-          return (
-            <div key={status} className="flex items-center gap-2">
-              <span className={`w-2 h-2 rounded-full ${cfg.dot}`} />
-              <span className={cfg.color}>{cfg.label}</span>
-              <span className="text-muted-foreground">{count}</span>
+      <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
+        {[
+          { label: "Total AI Services", value: models?.length ?? 4, icon: Brain, color: "text-primary" },
+          { label: "Running",           value: runningCount,         icon: Activity, color: "text-emerald-400" },
+          { label: "Error / Stopped",   value: errorCount,           icon: AlertTriangle, color: "text-red-400" },
+          { label: "Status Unknown",    value: unknownCount,         icon: Zap, color: "text-slate-400" },
+        ].map(stat => (
+          <div key={stat.label} className="bg-card border border-border rounded-lg p-3 flex items-center gap-3">
+            <stat.icon className={`w-5 h-5 flex-shrink-0 ${stat.color}`} />
+            <div>
+              <p className="text-lg font-bold text-foreground font-mono">{stat.value}</p>
+              <p className="text-[10px] text-muted-foreground uppercase tracking-wider">{stat.label}</p>
             </div>
-          );
-        })}
+          </div>
+        ))}
+      </div>
+
+      {/* Note about AI integration */}
+      <div className="flex items-start gap-3 p-3 bg-primary/5 border border-primary/20 rounded-lg text-xs text-muted-foreground">
+        <Workflow className="w-4 h-4 text-primary flex-shrink-0 mt-0.5" />
+        <p>
+          These AI services are integrated into your <span className="text-primary font-mono">n8n SOAR</span> workflows at{" "}
+          <code className="text-primary/80 font-mono">192.168.1.14:5678</code>. The Local AI Brain and UBA
+          services run locally at <code className="text-primary/80 font-mono">192.168.1.14:5000</code> via
+          Waitress. Alert Classification uses Google Gemini 2.5 Flash via the n8n Google AI node.
+          Status reflects the last known state — update manually or via your monitoring scripts.
+        </p>
       </div>
 
       {/* Model Cards */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
         {(models ?? []).map(model => {
           const Icon = modelIcons[model.slug] ?? Brain;
-          const status = statusConfig[model.status] ?? statusConfig.unknown;
+          const status = statusConfig[model.status as keyof typeof statusConfig] ?? statusConfig.unknown;
           const gradient = modelGradients[model.slug] ?? "from-slate-500/10";
+          const workflows = modelWorkflows[model.slug] ?? [];
+          const tech = modelTech[model.slug] ?? [];
 
           return (
             <Card key={model.id} className="bg-card border-border relative overflow-hidden">
@@ -87,45 +142,90 @@ export default function AIModelsPanel() {
                   </div>
                   <div className="flex-1 min-w-0">
                     <div className="flex items-center gap-2 flex-wrap">
-                      <span className="text-base">{model.name}</span>
+                      <span className="text-base font-bold">{model.name}</span>
                       <div className="flex items-center gap-1.5">
                         <span className={`w-2 h-2 rounded-full flex-shrink-0 ${status.dot}`} />
                         <span className={`text-[10px] font-mono ${status.color}`}>{status.label}</span>
                       </div>
                     </div>
-                    <p className="text-xs text-muted-foreground font-mono mt-0.5">{model.slug}</p>
+                    <p className="text-[10px] text-muted-foreground font-mono mt-0.5">{model.slug}</p>
                   </div>
                 </CardTitle>
               </CardHeader>
+
               <CardContent className="space-y-3">
+                {/* Description */}
                 <p className="text-xs text-muted-foreground leading-relaxed">{model.description}</p>
 
-                <div className="grid grid-cols-2 gap-3 text-xs">
+                {/* Endpoint */}
+                <div className="space-y-1">
+                  <p className="text-[10px] font-mono text-muted-foreground/60 uppercase tracking-wider flex items-center gap-1">
+                    <Link className="w-3 h-3" /> Endpoint
+                  </p>
+                  <div className="flex items-center gap-2 bg-muted/30 rounded px-2 py-1.5 border border-border">
+                    <Terminal className="w-3 h-3 text-muted-foreground flex-shrink-0" />
+                    <code className="text-[10px] font-mono text-primary/80 truncate">
+                      {model.endpointUrl ?? "Not configured"}
+                    </code>
+                  </div>
+                </div>
+
+                {/* Technology stack */}
+                {tech.length > 0 && (
                   <div className="space-y-1">
+                    <p className="text-[10px] font-mono text-muted-foreground/60 uppercase tracking-wider">Technology</p>
+                    <div className="flex flex-wrap gap-1">
+                      {tech.map(t => (
+                        <span key={t} className="text-[10px] font-mono px-1.5 py-0.5 rounded bg-muted/40 border border-border text-muted-foreground">
+                          {t}
+                        </span>
+                      ))}
+                    </div>
+                  </div>
+                )}
+
+                {/* n8n Workflows using this model */}
+                {workflows.length > 0 && (
+                  <div className="space-y-1">
+                    <p className="text-[10px] font-mono text-muted-foreground/60 uppercase tracking-wider flex items-center gap-1">
+                      <Workflow className="w-3 h-3" /> Used in n8n Workflows
+                    </p>
+                    <div className="flex flex-wrap gap-1">
+                      {workflows.map(w => (
+                        <span key={w} className="text-[10px] font-mono px-1.5 py-0.5 rounded bg-primary/10 border border-primary/20 text-primary/80">
+                          {w}
+                        </span>
+                      ))}
+                    </div>
+                  </div>
+                )}
+
+                {/* Last active + recent output */}
+                <div className="grid grid-cols-2 gap-3 text-xs pt-1 border-t border-border">
+                  <div>
                     <p className="text-muted-foreground/60 font-mono uppercase text-[10px]">Last Active</p>
-                    <p className="font-mono text-foreground">
+                    <p className="font-mono text-foreground text-[11px]">
                       {model.lastActive ? new Date(model.lastActive).toLocaleString() : "Never"}
                     </p>
                   </div>
-                  <div className="space-y-1">
-                    <p className="text-muted-foreground/60 font-mono uppercase text-[10px]">Endpoint</p>
-                    <p className="font-mono text-primary/80 truncate">
-                      {model.endpointUrl ?? "Not configured"}
-                    </p>
+                  <div>
+                    <p className="text-muted-foreground/60 font-mono uppercase text-[10px]">Invocations</p>
+                    <p className="font-mono text-foreground font-bold">—</p>
                   </div>
                 </div>
 
                 {model.recentOutput && (
                   <div className="space-y-1">
                     <p className="text-muted-foreground/60 font-mono uppercase text-[10px]">Recent Output</p>
-                    <div className="bg-muted/30 border border-border rounded px-3 py-2">
-                      <pre className="text-[10px] font-mono text-muted-foreground whitespace-pre-wrap line-clamp-3">
+                    <div className="bg-black/40 border border-border rounded px-3 py-2">
+                      <pre className="text-[10px] font-mono text-emerald-400/80 whitespace-pre-wrap line-clamp-4">
                         {model.recentOutput}
                       </pre>
                     </div>
                   </div>
                 )}
 
+                {/* Admin status control */}
                 {isAdmin && (
                   <Button
                     size="sm"
@@ -134,7 +234,7 @@ export default function AIModelsPanel() {
                     onClick={() => cycleStatus(model)}
                     disabled={updateMutation.isPending}
                   >
-                    Cycle Status (Admin Test)
+                    Cycle Status (Admin)
                   </Button>
                 )}
               </CardContent>

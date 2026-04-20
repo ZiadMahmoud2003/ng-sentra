@@ -49,8 +49,8 @@ export default function ComponentsGrid() {
           <h1 className="text-2xl font-bold text-foreground">Components</h1>
           <p className="text-muted-foreground text-sm mt-1">Select a component to open its interface</p>
         </div>
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
-          {Array.from({ length: 11 }).map((_, i) => (
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+          {Array.from({ length: 6 }).map((_, i) => (
             <div key={i} className="h-44 bg-card border border-border rounded-lg animate-pulse" />
           ))}
         </div>
@@ -69,7 +69,7 @@ export default function ComponentsGrid() {
         </div>
       </div>
 
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
         {(components ?? []).map((comp, idx) => {
           const Icon = iconMap[comp.icon ?? "Shield"] ?? Shield;
           const catColor = categoryColors[comp.category ?? ""] ?? "text-slate-400 bg-slate-400/10 border-slate-400/30";
@@ -122,9 +122,9 @@ export default function ComponentsGrid() {
                     variant={isConfigured ? "default" : "outline"}
                     className="h-6 text-[10px] px-2 font-mono"
                     disabled={!isConfigured || !comp.enabled}
-                    onClick={e => { e.stopPropagation(); navigate(`/components/${comp.slug}`); }}
+                    onClick={e => { e.stopPropagation(); if (isConfigured) navigate(`/components/${comp.slug}`); }}
                   >
-                    {isConfigured ? <><ExternalLink className="w-3 h-3 mr-1" />OPEN</> : "CONFIGURE"}
+                    {isConfigured ? <><ExternalLink className="w-3 h-3 mr-1" />OPEN</> : "CLI ONLY"}
                   </Button>
                 </div>
               </CardContent>

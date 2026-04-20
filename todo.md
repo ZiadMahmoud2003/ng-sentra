@@ -98,3 +98,13 @@
 
 ## Final
 - [x] Save checkpoint
+
+## Infrastructure Update (v1.1)
+- [x] Update all component URLs to 192.168.1.14 with correct default ports
+- [x] Update n8n SOAR webhook URLs to http://192.168.1.14:5678/webhook/<path>
+- [x] Remove Anomaly Detection AI, Alert Classification AI, UBA AI, Local TI API from components grid
+- [x] Remove Digital Forensics Workstation from components grid
+- [x] Update AI models panel to reflect actual n8n-integrated AI (Gemini + Local AI Brain)
+- [x] Update seed.ts with real data and re-seed database
+- [x] Update SOAR panel with real webhook paths and IR descriptions from n8n JSON
+- [x] Save checkpoint v1.1

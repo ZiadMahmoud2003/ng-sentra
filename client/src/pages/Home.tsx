@@ -60,7 +60,7 @@ export default function Home() {
   const aiRunning = metrics?.aiModels?.filter(m => m.status === "running").length ?? 0;
   const aiTotal = metrics?.aiModels?.length ?? 4;
   const configuredCount = metrics?.configuredComponents ?? 0;
-  const totalCount = metrics?.totalComponents ?? 11;
+  const totalCount = metrics?.totalComponents ?? 6;
 
   return (
     <div className="space-y-6">
