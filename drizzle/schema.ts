@@ -86,3 +86,16 @@ export const aiModels = mysqlTable("ai_models", {
 
 export type AiModel = typeof aiModels.$inferSelect;
 export type InsertAiModel = typeof aiModels.$inferInsert;
+
+// System settings table — key/value store for global configurable settings
+export const systemSettings = mysqlTable("system_settings", {
+  id: int("id").autoincrement().primaryKey(),
+  key: varchar("key", { length: 128 }).notNull().unique(),
+  value: text("value"),
+  label: varchar("label", { length: 256 }),
+  description: text("description"),
+  updatedAt: timestamp("updatedAt").defaultNow().onUpdateNow().notNull(),
+});
+
+export type SystemSetting = typeof systemSettings.$inferSelect;
+export type InsertSystemSetting = typeof systemSettings.$inferInsert;

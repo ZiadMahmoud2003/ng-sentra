@@ -60,9 +60,10 @@ export default function ComponentsGrid() {
   const { data: components, isLoading } = trpc.components.list.useQuery();
 
   const isAdmin = user?.role === "Admin" || user?.role === "admin";
+  const isViewer = user?.role === "Viewer" || user?.role === "user";
 
-  // Hide adminOnly components from non-admin users
-  const visibleComponents = (components ?? []).filter(c => !c.adminOnly || isAdmin);
+  // Server already filters by role — use directly
+  const visibleComponents = components ?? [];
 
   const handleClick = (comp: any) => {
     const cfg = accessTypeConfig[comp.accessType ?? "iframe"];
@@ -79,7 +80,10 @@ export default function ComponentsGrid() {
         </h1>
         <p className="text-muted-foreground text-sm mt-1">
           {visibleComponents.length} component{visibleComponents.length !== 1 ? "s" : ""} in your security stack
-          {!isAdmin && (
+          {isViewer && (
+            <span className="ml-2 text-[10px] text-amber-400/70 font-mono">(Viewer access: Wazuh &amp; T-Pot only)</span>
+          )}
+          {!isAdmin && !isViewer && (
             <span className="ml-2 text-[10px] text-muted-foreground/50 font-mono">(admin-only components hidden)</span>
           )}
         </p>

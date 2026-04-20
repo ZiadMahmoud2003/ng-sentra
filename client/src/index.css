@@ -44,44 +44,44 @@
 }
 
 :root {
-  /* SOC Dark Theme - Cybersecurity Palette */
+  /* SOC Light Theme - Professional Cybersecurity Light Palette */
   --radius: 0.5rem;
-  --background: oklch(0.1 0.015 240);
-  --foreground: oklch(0.92 0.01 220);
-  --card: oklch(0.13 0.018 240);
-  --card-foreground: oklch(0.92 0.01 220);
-  --popover: oklch(0.13 0.018 240);
-  --popover-foreground: oklch(0.92 0.01 220);
-  --primary: oklch(0.72 0.18 200);
-  --primary-foreground: oklch(0.1 0.015 240);
-  --secondary: oklch(0.18 0.02 240);
-  --secondary-foreground: oklch(0.85 0.01 220);
-  --muted: oklch(0.16 0.018 240);
-  --muted-foreground: oklch(0.55 0.01 220);
-  --accent: oklch(0.72 0.18 200);
-  --accent-foreground: oklch(0.1 0.015 240);
-  --destructive: oklch(0.62 0.22 25);
+  --background: oklch(0.97 0.005 220);
+  --foreground: oklch(0.15 0.02 240);
+  --card: oklch(1 0 0);
+  --card-foreground: oklch(0.15 0.02 240);
+  --popover: oklch(1 0 0);
+  --popover-foreground: oklch(0.15 0.02 240);
+  --primary: oklch(0.52 0.18 200);
+  --primary-foreground: oklch(0.98 0.005 220);
+  --secondary: oklch(0.92 0.01 220);
+  --secondary-foreground: oklch(0.2 0.02 240);
+  --muted: oklch(0.93 0.008 220);
+  --muted-foreground: oklch(0.45 0.015 230);
+  --accent: oklch(0.52 0.18 200);
+  --accent-foreground: oklch(0.98 0.005 220);
+  --destructive: oklch(0.55 0.22 25);
   --destructive-foreground: oklch(0.98 0.01 0);
-  --border: oklch(0.22 0.02 240);
-  --input: oklch(0.18 0.02 240);
-  --ring: oklch(0.72 0.18 200);
-  --chart-1: oklch(0.72 0.18 200);
-  --chart-2: oklch(0.65 0.2 160);
-  --chart-3: oklch(0.75 0.18 280);
-  --chart-4: oklch(0.72 0.22 25);
-  --chart-5: oklch(0.78 0.18 80);
-  --sidebar: oklch(0.11 0.016 240);
-  --sidebar-foreground: oklch(0.85 0.01 220);
-  --sidebar-primary: oklch(0.72 0.18 200);
-  --sidebar-primary-foreground: oklch(0.1 0.015 240);
-  --sidebar-accent: oklch(0.16 0.018 240);
-  --sidebar-accent-foreground: oklch(0.85 0.01 220);
-  --sidebar-border: oklch(0.2 0.02 240);
-  --sidebar-ring: oklch(0.72 0.18 200);
+  --border: oklch(0.85 0.01 220);
+  --input: oklch(0.9 0.01 220);
+  --ring: oklch(0.52 0.18 200);
+  --chart-1: oklch(0.52 0.18 200);
+  --chart-2: oklch(0.55 0.2 160);
+  --chart-3: oklch(0.55 0.18 280);
+  --chart-4: oklch(0.55 0.22 25);
+  --chart-5: oklch(0.6 0.18 80);
+  --sidebar: oklch(0.94 0.01 220);
+  --sidebar-foreground: oklch(0.2 0.02 240);
+  --sidebar-primary: oklch(0.52 0.18 200);
+  --sidebar-primary-foreground: oklch(0.98 0.005 220);
+  --sidebar-accent: oklch(0.88 0.012 220);
+  --sidebar-accent-foreground: oklch(0.2 0.02 240);
+  --sidebar-border: oklch(0.82 0.012 220);
+  --sidebar-ring: oklch(0.52 0.18 200);
 }
 
 .dark {
-  /* Same as root - always dark */
+  /* SOC Dark Theme - Cybersecurity Palette */
   --background: oklch(0.1 0.015 240);
   --foreground: oklch(0.92 0.01 220);
   --card: oklch(0.13 0.018 240);

@@ -6,8 +6,8 @@ import { systemRouter } from "./_core/systemRouter";
 import { protectedProcedure, publicProcedure, router } from "./_core/trpc";
 import {
   createAuditLog, deleteUser, getAllAiModels, getAllComponents, getAllSoarApproaches,
-  getAllUsers, getAuditLogs, getRecentAuditLogs, triggerSoarApproach, updateAiModel,
-  updateComponent, updateSoarApproach, updateUserRole,
+  getAllSettings, getAllUsers, getAuditLogs, getRecentAuditLogs, triggerSoarApproach,
+  updateAiModel, updateComponent, updateSoarApproach, updateUserRole, upsertSetting,
 } from "./db";
 
 // ─── RBAC helpers ────────────────────────────────────────────────────────────
@@ -60,9 +60,15 @@ export const appRouter = router({
   components: router({
     list: protectedProcedure.query(async ({ ctx }) => {
       const all = await getAllComponents();
-      const isAdmin = ctx.user?.role === "Admin" || ctx.user?.role === "admin";
-      // Non-admins cannot see adminOnly components (Snort, UFW, Filebeat)
-      return isAdmin ? all : all.filter((c: any) => !c.adminOnly);
+      const role = ctx.user?.role;
+      const isAdmin = role === "Admin" || role === "admin";
+      const isViewer = role === "Viewer" || role === "user";
+
+      if (isAdmin) return all;
+      // Viewer role: only Wazuh and T-Pot (iframe components with web UI)
+      if (isViewer) return all.filter((c: any) => ["wazuh", "tpot"].includes(c.slug));
+      // Analyst: all non-adminOnly components
+      return all.filter((c: any) => !c.adminOnly);
     }),
 
     update: adminProcedure
@@ -226,6 +232,24 @@ export const appRouter = router({
         return { success: true };
       }),
   }),
-});
 
+  // ─── System Settings ────────────────────────────────────────────────────────────
+  settings: router({
+    list: protectedProcedure.query(async () => {
+      return getAllSettings();
+    }),
+    upsert: adminProcedure
+      .input(z.object({
+        key: z.string(),
+        value: z.string(),
+        label: z.string().optional(),
+        description: z.string().optional(),
+      }))
+      .mutation(async ({ ctx, input }) => {
+        await upsertSetting(input.key, input.value, input.label, input.description);
+        await logAction(ctx, "UPDATE_SETTING", `setting:${input.key}`, input.value);
+        return { success: true };
+      }),
+  }),
+});
 export type AppRouter = typeof appRouter;

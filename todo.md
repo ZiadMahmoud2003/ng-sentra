@@ -128,3 +128,16 @@
 - [x] Fix logo quality: upscaled to 1024x1024, transparent background, updated all references
 - [x] Update AI models panel: show as background services, no IP access
 - [x] Save checkpoint v1.3
+
+## v1.4 — No Hardcoded Values, Global Theme, Viewer Restrictions
+- [x] Remove all hardcoded IPs/ports from SOARPanel.tsx (n8n IP, webhook URLs)
+- [x] Remove all hardcoded IPs/ports from AIModelsPanel.tsx (port 5000, 5678 references)
+- [x] Remove all hardcoded IPs/ports from Home.tsx dashboard
+- [x] Add n8n base URL as a configurable system setting in the database
+- [x] Add system settings table/router for global config (n8n URL, etc.)
+- [x] Fix light mode: update index.css with proper light theme CSS variables for all colors
+- [x] Ensure light mode applies globally to all pages (not just sidebar/roles)
+- [x] Fix LoginPage to respect light/dark theme
+- [x] Restrict Viewer role: only Wazuh and T-Pot visible (backend filter + frontend)
+- [x] Update backend components.list to filter by role: Viewer sees only Wazuh + T-Pot
+- [x] Save checkpoint v1.4

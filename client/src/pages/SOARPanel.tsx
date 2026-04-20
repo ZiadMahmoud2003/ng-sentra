@@ -41,7 +41,7 @@ const approachMeta: Record<string, {
     triggerLabel: "POST /webhook/wazuh-realtime",
     aiModels: ["Local AI Brain", "Gemini 2.5 Flash"],
     actions: ["UFW block via SSH", "Push alert to Wazuh", "Send HTML email report"],
-    irCommand: "sudo python3 /soc/incident_response.py <ip> <ir_action>",
+    irCommand: "sudo python3 /soc/incident_response.py <ip> <ir_action>  # via SSH {SSH_USER}@{SSH_HOST}",
   },
   behavior: {
     triggerType: "schedule",
@@ -73,6 +73,13 @@ const approachMeta: Record<string, {
 export default function SOARPanel() {
   const { user } = useAuth();
   const { data: approaches, refetch } = trpc.soar.list.useQuery();
+  const { data: settings } = trpc.settings.list.useQuery();
+
+  // Resolve dynamic settings
+  const getSetting = (key: string) => settings?.find(s => s.key === key)?.value ?? "";
+  const n8nBaseUrl = getSetting("n8n_base_url") || "http://<n8n-host>:5678";
+  const sshHost = getSetting("soar_ssh_host") || "<ssh-host>";
+  const sshUser = getSetting("soar_ssh_user") || "ubuntu";
   const triggerMutation = trpc.soar.trigger.useMutation({
     onSuccess: () => { toast.success("IR workflow triggered successfully"); refetch(); },
     onError: (e) => toast.error(`Trigger failed: ${e.message}`),
@@ -115,7 +122,7 @@ export default function SOARPanel() {
           </h1>
           <p className="text-muted-foreground text-sm mt-1">
             Incident Response automation — 5 workflows running on n8n at{" "}
-            <code className="text-primary/80 font-mono text-xs">192.168.1.14:5678</code>
+            <code className="text-primary/80 font-mono text-xs">{n8nBaseUrl}</code>
           </p>
           {/* Behavior webhook IP config for Admin */}
           {isAdmin && behaviorApproach && (
@@ -128,7 +135,7 @@ export default function SOARPanel() {
                   <Input
                     value={behaviorWebhookUrl}
                     onChange={e => setBehaviorWebhookUrl(e.target.value)}
-                    placeholder="http://192.168.1.14:5678/webhook/behavior"
+                    placeholder={`${n8nBaseUrl}/webhook/behavior`}
                     className="h-7 text-xs font-mono flex-1"
                   />
                   <Button size="sm" className="h-7 px-2" onClick={saveBehaviorWebhook} disabled={updateSoarMutation.isPending}>
@@ -289,7 +296,11 @@ export default function SOARPanel() {
                       <Terminal className="w-3 h-3" /> IR Command (SSH)
                     </p>
                     <div className="bg-black/40 rounded px-2 py-1.5 border border-border">
-                      <code className="text-[10px] font-mono text-emerald-400/80 break-all">{meta.irCommand}</code>
+                      <code className="text-[10px] font-mono text-emerald-400/80 break-all">
+                        {meta.irCommand
+                          .replace("{SSH_USER}", sshUser || "ubuntu")
+                          .replace("{SSH_HOST}", sshHost || "<ssh-host>")}
+                      </code>
                     </div>
                   </div>
                 )}

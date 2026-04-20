@@ -21,6 +21,7 @@ const adminNavItems = [
   { href: "/admin/components", label: "Component Config", icon: Settings },
   { href: "/admin/users", label: "User Management", icon: Users },
   { href: "/admin/audit", label: "Audit Trail", icon: Activity },
+  { href: "/admin/settings", label: "System Settings", icon: Globe },
 ];
 
 const roleBadgeVariant: Record<string, string> = {

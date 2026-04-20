@@ -13,6 +13,7 @@ import AIModelsPanel from "./pages/AIModelsPanel";
 import AdminComponents from "./pages/AdminComponents";
 import AdminUsers from "./pages/AdminUsers";
 import AdminAudit from "./pages/AdminAudit";
+import AdminSettings from "./pages/AdminSettings";
 import LoginPage from "./pages/LoginPage";
 
 function Router() {
@@ -27,6 +28,7 @@ function Router() {
       <Route path="/admin/components" component={() => <SOCLayout><AdminComponents /></SOCLayout>} />
       <Route path="/admin/users" component={() => <SOCLayout><AdminUsers /></SOCLayout>} />
       <Route path="/admin/audit" component={() => <SOCLayout><AdminAudit /></SOCLayout>} />
+      <Route path="/admin/settings" component={() => <SOCLayout><AdminSettings /></SOCLayout>} />
       <Route path="/404" component={NotFound} />
       <Route component={NotFound} />
     </Switch>

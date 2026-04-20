@@ -47,6 +47,10 @@ const modelTech: Record<string, string[]> = {
 
 export default function AIModelsPanel() {
   const { user } = useAuth();
+  const { data: settings } = trpc.settings.list.useQuery();
+  const getSetting = (key: string) => settings?.find(s => s.key === key)?.value ?? "";
+  const n8nBaseUrl = getSetting("n8n_base_url") || "http://<n8n-host>:5678";
+  const localAiBrainUrl = getSetting("local_ai_brain_url") || "http://<host>:5000";
   const { data: models, refetch, isLoading } = trpc.aiModels.list.useQuery(undefined, {
     refetchInterval: 60_000,
   });
@@ -116,8 +120,10 @@ export default function AIModelsPanel() {
         <Workflow className="w-4 h-4 text-primary flex-shrink-0 mt-0.5" />
         <p>
           These AI services run as <span className="text-primary font-mono">background services</span> on your VirtualBox environment — they have no direct web UI and cannot be accessed via browser. They are invoked exclusively by your{" "}
-            <span className="text-primary font-mono">n8n SOAR</span> workflows. The Local AI Brain and UBA
-            services run locally via Waitress (port 5000). Alert Classification uses Google Gemini 2.5 Flash via the n8n Google AI node.
+            <span className="text-primary font-mono">n8n SOAR</span> workflows at{" "}
+            <code className="text-primary/80 font-mono text-[10px]">{n8nBaseUrl}</code>. The Local AI Brain and UBA
+            services run locally via Waitress at{" "}
+            <code className="text-primary/80 font-mono text-[10px]">{localAiBrainUrl}</code>. Alert Classification uses Google Gemini 2.5 Flash via the n8n Google AI node.
             Status reflects the last known state — update manually or via your monitoring scripts.
         </p>
       </div>

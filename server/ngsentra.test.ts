@@ -5,8 +5,10 @@ import type { TrpcContext } from "./_core/context";
 // ─── Mock DB ─────────────────────────────────────────────────────────────────
 vi.mock("./db", () => ({
   getAllComponents: vi.fn().mockResolvedValue([
-    { id: 1, name: "Wazuh", slug: "wazuh", url: "http://localhost", port: 443, description: "SIEM", icon: "Shield", category: "SIEM", enabled: true, createdAt: new Date(), updatedAt: new Date() },
-    { id: 2, name: "Snort", slug: "snort", url: null, port: 8080, description: "IDS", icon: "Eye", category: "IDS", enabled: true, createdAt: new Date(), updatedAt: new Date() },
+    { id: 1, name: "Wazuh", slug: "wazuh", url: "http://192.168.1.14", port: 443, description: "SIEM", icon: "Shield", category: "SIEM", enabled: true, adminOnly: false, accessType: "iframe", createdAt: new Date(), updatedAt: new Date() },
+    { id: 2, name: "T-Pot", slug: "tpot", url: "http://192.168.1.14", port: 64297, description: "Honeypot", icon: "Bug", category: "Honeypot", enabled: true, adminOnly: false, accessType: "iframe", createdAt: new Date(), updatedAt: new Date() },
+    { id: 3, name: "Snort", slug: "snort", url: null, port: null, description: "IDS", icon: "Eye", category: "IDS/IPS", enabled: true, adminOnly: true, accessType: "config-file", createdAt: new Date(), updatedAt: new Date() },
+    { id: 4, name: "n8n SOAR", slug: "n8n", url: "http://192.168.1.14", port: 5678, description: "SOAR", icon: "Zap", category: "SOAR", enabled: true, adminOnly: false, accessType: "iframe", createdAt: new Date(), updatedAt: new Date() },
   ]),
   updateComponent: vi.fn().mockResolvedValue(undefined),
   getAllUsers: vi.fn().mockResolvedValue([
@@ -189,6 +191,6 @@ describe("Metrics", () => {
     expect(result).toHaveProperty("aiModels");
     expect(result).toHaveProperty("recentActivity");
     expect(result).toHaveProperty("timestamp");
-    expect(result.totalComponents).toBe(2);
+    expect(result.totalComponents).toBe(4);
   });
 });

@@ -1,6 +1,6 @@
 import { and, desc, eq, gte, like, lte, sql } from "drizzle-orm";
 import { drizzle } from "drizzle-orm/mysql2";
-import { AiModel, AuditLog, Component, InsertAiModel, InsertAuditLog, InsertComponent, InsertSoarApproach, InsertUser, SoarApproach, User, aiModels, auditLogs, components, soarApproaches, users } from "../drizzle/schema";
+import { AiModel, AuditLog, Component, InsertAiModel, InsertAuditLog, InsertComponent, InsertSoarApproach, InsertUser, SoarApproach, SystemSetting, User, aiModels, auditLogs, components, soarApproaches, systemSettings, users } from "../drizzle/schema";
 import { ENV } from './_core/env';
 
 let _db: ReturnType<typeof drizzle> | null = null;
@@ -190,4 +190,26 @@ export async function getAiModelBySlug(slug: string): Promise<AiModel | undefine
   if (!db) return undefined;
   const result = await db.select().from(aiModels).where(eq(aiModels.slug, slug)).limit(1);
   return result.length > 0 ? result[0] : undefined;
+}
+
+// ─── System Settings ────────────────────────────────────────────────────────────
+export async function getAllSettings(): Promise<SystemSetting[]> {
+  const db = await getDb();
+  if (!db) return [];
+  return db.select().from(systemSettings).orderBy(systemSettings.key);
+}
+
+export async function getSettingByKey(key: string): Promise<string | null> {
+  const db = await getDb();
+  if (!db) return null;
+  const result = await db.select().from(systemSettings).where(eq(systemSettings.key, key)).limit(1);
+  return result.length > 0 ? (result[0].value ?? null) : null;
+}
+
+export async function upsertSetting(key: string, value: string, label?: string, description?: string): Promise<void> {
+  const db = await getDb();
+  if (!db) return;
+  await db.insert(systemSettings)
+    .values({ key, value, label: label ?? key, description: description ?? null })
+    .onDuplicateKeyUpdate({ set: { value, updatedAt: new Date() } });
 }
