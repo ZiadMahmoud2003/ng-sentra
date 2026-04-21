@@ -165,3 +165,14 @@
 - [x] Implement PowerShell command generation with SSH pre-filled
 - [x] Test PowerShell launch on Windows machine
 - [x] Save checkpoint v1.7
+
+## v1.8 — Web-Based Terminal UI (xterm.js)
+- [x] Install xterm.js and xterm-addon-fit dependencies (kept @xterm/* packages, removed deprecated ones)
+- [x] Create WebTerminal component with xterm.js integration
+- [x] Add backend WebSocket/SSH tunnel service for terminal I/O
+- [x] Refactor to keep SSH credentials server-side (not sent to client)
+- [x] Add RBAC enforcement for terminal access (admin/analyst only)
+- [x] Update TerminalAccessPage to embed WebTerminal component
+- [x] Update ConfigFileViewer to embed WebTerminal for config editing
+- [x] Test terminal input/output with SSH commands (all 22 tests pass)
+- [x] Save checkpoint v1.8

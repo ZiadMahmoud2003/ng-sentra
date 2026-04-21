@@ -2,12 +2,13 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import {
-  ArrowLeft, Copy, Check, AlertTriangle, FileText, Terminal, Code, Loader2
+  ArrowLeft, Copy, Check, AlertTriangle, FileText, Terminal, Code, Loader2, X
 } from "lucide-react";
 import { useEffect, useState } from "react";
 import { useLocation, useParams } from "wouter";
 import { toast } from "sonner";
 import { trpc } from "@/lib/trpc";
+import WebTerminal from "@/components/WebTerminal";
 
 const configPaths: Record<string, { path: string; description: string }> = {
   filebeat: {
@@ -29,6 +30,7 @@ export default function ConfigFileViewer() {
   const slug = params.slug;
   const [, navigate] = useLocation();
   const [copied, setCopied] = useState(false);
+  const [useEmbeddedTerminal, setUseEmbeddedTerminal] = useState(false);
 
   const { data: components } = trpc.components.list.useQuery();
   const { data: settings } = trpc.settings.list.useQuery();
@@ -40,7 +42,7 @@ export default function ConfigFileViewer() {
   const component = components?.find(c => c.slug === slug);
   const configInfo = configPaths[slug];
 
-  // Get SSH credentials from settings
+  // Get SSH credentials from settings (for display only)
   const sshSettings = settings?.reduce((acc: any, s: any) => {
     acc[s.key] = s.value;
     return acc;
@@ -59,18 +61,6 @@ export default function ConfigFileViewer() {
     setTimeout(() => setCopied(false), 2000);
   };
 
-  const handleOpenPowerShell = (command: string) => {
-    const batchScript = `@echo off\nstart powershell -NoExit -Command "${command}"\nexit`;
-    const blob = new Blob([batchScript], { type: 'text/plain' });
-    const url = window.URL.createObjectURL(blob);
-    const a = document.createElement('a');
-    a.href = url;
-    a.download = 'ssh-connect.bat';
-    a.click();
-    window.URL.revokeObjectURL(url);
-    toast.success("SSH command file downloaded! Run it to open PowerShell.");
-  };
-
   if (!component || !configInfo) {
     return (
       <div className="flex items-center justify-center h-64">
@@ -80,6 +70,33 @@ export default function ConfigFileViewer() {
           <Button variant="outline" size="sm" onClick={() => navigate("/components")}>
             <ArrowLeft className="w-4 h-4 mr-2" />Back to Components
           </Button>
+        </div>
+      </div>
+    );
+  }
+
+  if (useEmbeddedTerminal) {
+    return (
+      <div className="w-full h-screen flex flex-col bg-background">
+        {/* Header */}
+        <div className="border-b border-border p-4 flex items-center justify-between">
+          <div className="flex items-center gap-3">
+            <FileText className="w-5 h-5 text-primary" />
+            <h1 className="text-lg font-semibold text-foreground">{component.name} - Config Editor</h1>
+          </div>
+          <Button
+            variant="ghost"
+            size="sm"
+            onClick={() => setUseEmbeddedTerminal(false)}
+            className="text-muted-foreground hover:text-foreground"
+          >
+            <X className="w-4 h-4" />
+          </Button>
+        </div>
+
+        {/* Terminal */}
+        <div className="flex-1 overflow-hidden p-4">
+          <WebTerminal componentSlug={slug} filePath={configInfo.path} />
         </div>
       </div>
     );
@@ -200,7 +217,7 @@ export default function ConfigFileViewer() {
           {/* Edit Instructions */}
           <div className="rounded-lg bg-blue-500/5 border border-blue-500/20 p-3">
             <p className="text-xs text-blue-300/80">
-              <strong>To edit the config file:</strong> Download it using the SCP command above, edit it locally, then upload it back using:
+              <strong>To edit the config file:</strong> Click "Open Terminal" below to launch an interactive SSH editor, or download it using the SCP command above, edit it locally, then upload it back using:
             </p>
             <div className="mt-2 flex items-center gap-2 bg-muted/30 border border-border rounded px-3 py-2 font-mono text-xs">
               <span className="text-primary flex-1">scp ./{slug}.conf {sshUser}@{sshHost}:{configInfo.path}</span>
@@ -224,12 +241,12 @@ export default function ConfigFileViewer() {
                 Copy SSH
               </Button>
               <Button
-                onClick={() => handleOpenPowerShell(sshCommand)}
-                className="flex-1 bg-blue-600 hover:bg-blue-700 text-white"
+                onClick={() => setUseEmbeddedTerminal(true)}
+                className="flex-1 bg-green-600 hover:bg-green-700 text-white"
                 size="sm"
               >
                 <Terminal className="w-3.5 h-3.5 mr-1.5" />
-                Open PowerShell
+                Open Terminal
               </Button>
             </div>
           </div>

@@ -2,21 +2,23 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import {
-  ArrowLeft, Copy, Check, Terminal, AlertCircle, Zap, Monitor
+  ArrowLeft, Copy, Check, Terminal, AlertCircle, Zap, Monitor, X
 } from "lucide-react";
 import { useState } from "react";
 import { useLocation } from "wouter";
 import { toast } from "sonner";
 import { trpc } from "@/lib/trpc";
+import WebTerminal from "@/components/WebTerminal";
 
 export default function TerminalAccessPage() {
   const [, navigate] = useLocation();
   const [copied, setCopied] = useState(false);
+  const [useEmbeddedTerminal, setUseEmbeddedTerminal] = useState(false);
 
   const { data: settings } = trpc.settings.list.useQuery();
   const { data: sshTestResult } = trpc.ssh.testConnection.useQuery();
 
-  // Get SSH credentials from settings
+  // Get SSH credentials from settings (for display only)
   const sshSettings = settings?.reduce((acc: any, s: any) => {
     acc[s.key] = s.value;
     return acc;
@@ -34,17 +36,32 @@ export default function TerminalAccessPage() {
     setTimeout(() => setCopied(false), 2000);
   };
 
-  const handleOpenPowerShell = (command: string) => {
-    const batchScript = `@echo off\nstart powershell -NoExit -Command "${command}"\nexit`;
-    const blob = new Blob([batchScript], { type: 'text/plain' });
-    const url = window.URL.createObjectURL(blob);
-    const a = document.createElement('a');
-    a.href = url;
-    a.download = 'ssh-connect.bat';
-    a.click();
-    window.URL.revokeObjectURL(url);
-    toast.success("SSH command file downloaded! Run it to open PowerShell.");
-  };
+  if (useEmbeddedTerminal) {
+    return (
+      <div className="w-full h-screen flex flex-col bg-background">
+        {/* Header */}
+        <div className="border-b border-border p-4 flex items-center justify-between">
+          <div className="flex items-center gap-3">
+            <Monitor className="w-5 h-5 text-primary" />
+            <h1 className="text-lg font-semibold text-foreground">Digital Forensics Workstation - SSH Terminal</h1>
+          </div>
+          <Button
+            variant="ghost"
+            size="sm"
+            onClick={() => setUseEmbeddedTerminal(false)}
+            className="text-muted-foreground hover:text-foreground"
+          >
+            <X className="w-4 h-4" />
+          </Button>
+        </div>
+
+        {/* Terminal */}
+        <div className="flex-1 overflow-hidden p-4">
+          <WebTerminal componentSlug="df-workstation" />
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="max-w-3xl mx-auto py-10 px-4 space-y-6">
@@ -137,14 +154,23 @@ export default function TerminalAccessPage() {
             <li className="flex gap-3">
               <Badge className="mt-0.5 flex-shrink-0">1</Badge>
               <div>
-                <p className="text-sm font-medium text-foreground">Copy the SSH Command</p>
+                <p className="text-sm font-medium text-foreground">Use Embedded Terminal</p>
+                <p className="text-xs text-muted-foreground mt-1">
+                  Click "Open Terminal" below to launch an interactive SSH terminal directly in your browser.
+                </p>
+              </div>
+            </li>
+            <li className="flex gap-3">
+              <Badge className="mt-0.5 flex-shrink-0">2</Badge>
+              <div>
+                <p className="text-sm font-medium text-foreground">Or Copy the SSH Command</p>
                 <p className="text-xs text-muted-foreground mt-1">
                   Click the copy button above to copy the SSH connection command to your clipboard.
                 </p>
               </div>
             </li>
             <li className="flex gap-3">
-              <Badge className="mt-0.5 flex-shrink-0">2</Badge>
+              <Badge className="mt-0.5 flex-shrink-0">3</Badge>
               <div>
                 <p className="text-sm font-medium text-foreground">Open Your Terminal</p>
                 <p className="text-xs text-muted-foreground mt-1">
@@ -153,7 +179,7 @@ export default function TerminalAccessPage() {
               </div>
             </li>
             <li className="flex gap-3">
-              <Badge className="mt-0.5 flex-shrink-0">3</Badge>
+              <Badge className="mt-0.5 flex-shrink-0">4</Badge>
               <div>
                 <p className="text-sm font-medium text-foreground">Paste and Execute</p>
                 <p className="text-xs text-muted-foreground mt-1">
@@ -162,7 +188,7 @@ export default function TerminalAccessPage() {
               </div>
             </li>
             <li className="flex gap-3">
-              <Badge className="mt-0.5 flex-shrink-0">4</Badge>
+              <Badge className="mt-0.5 flex-shrink-0">5</Badge>
               <div>
                 <p className="text-sm font-medium text-foreground">Access the Workstation</p>
                 <p className="text-xs text-muted-foreground mt-1">
@@ -210,12 +236,12 @@ export default function TerminalAccessPage() {
             Copy SSH Command
           </Button>
           <Button
-            onClick={() => handleOpenPowerShell(sshCommand)}
-            className="flex-1 bg-blue-600 hover:bg-blue-700 text-white"
+            onClick={() => setUseEmbeddedTerminal(true)}
+            className="flex-1 bg-green-600 hover:bg-green-700 text-white"
             size="lg"
           >
             <Terminal className="w-4 h-4 mr-2" />
-            Open PowerShell
+            Open Terminal
           </Button>
         </div>
         <Button
