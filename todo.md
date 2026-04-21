@@ -158,3 +158,10 @@
 - [x] Update ComponentViewer: route config-file to ConfigFileViewer, terminal to TerminalAccessPage
 - [x] Test SSH file reading and command generation
 - [x] Save checkpoint v1.6
+
+## v1.7 — Windows PowerShell Terminal Launch
+- [x] Add Windows PowerShell launch button to TerminalAccessPage (DF Workstation)
+- [x] Add Windows PowerShell launch button to ConfigFileViewer (Snort/UFW/Filebeat)
+- [x] Implement PowerShell command generation with SSH pre-filled
+- [x] Test PowerShell launch on Windows machine
+- [x] Save checkpoint v1.7

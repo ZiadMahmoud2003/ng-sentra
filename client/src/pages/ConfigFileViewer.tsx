@@ -1,4 +1,3 @@
-import { trpc } from "@/lib/trpc";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -8,6 +7,7 @@ import {
 import { useEffect, useState } from "react";
 import { useLocation, useParams } from "wouter";
 import { toast } from "sonner";
+import { trpc } from "@/lib/trpc";
 
 const configPaths: Record<string, { path: string; description: string }> = {
   filebeat: {
@@ -57,6 +57,18 @@ export default function ConfigFileViewer() {
     setCopied(true);
     toast.success("Command copied to clipboard!");
     setTimeout(() => setCopied(false), 2000);
+  };
+
+  const handleOpenPowerShell = (command: string) => {
+    const batchScript = `@echo off\nstart powershell -NoExit -Command "${command}"\nexit`;
+    const blob = new Blob([batchScript], { type: 'text/plain' });
+    const url = window.URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = 'ssh-connect.bat';
+    a.click();
+    window.URL.revokeObjectURL(url);
+    toast.success("SSH command file downloaded! Run it to open PowerShell.");
   };
 
   if (!component || !configInfo) {
@@ -199,6 +211,25 @@ export default function ConfigFileViewer() {
                 className="h-6 px-2"
               >
                 {copied ? <Check className="w-3.5 h-3.5" /> : <Copy className="w-3.5 h-3.5" />}
+              </Button>
+            </div>
+            <div className="mt-3 flex gap-2">
+              <Button
+                onClick={() => handleCopyCommand(sshCommand)}
+                variant="outline"
+                size="sm"
+                className="flex-1"
+              >
+                <Copy className="w-3.5 h-3.5 mr-1.5" />
+                Copy SSH
+              </Button>
+              <Button
+                onClick={() => handleOpenPowerShell(sshCommand)}
+                className="flex-1 bg-blue-600 hover:bg-blue-700 text-white"
+                size="sm"
+              >
+                <Terminal className="w-3.5 h-3.5 mr-1.5" />
+                Open PowerShell
               </Button>
             </div>
           </div>

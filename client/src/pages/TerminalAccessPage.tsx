@@ -1,4 +1,3 @@
-import { trpc } from "@/lib/trpc";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -8,6 +7,7 @@ import {
 import { useState } from "react";
 import { useLocation } from "wouter";
 import { toast } from "sonner";
+import { trpc } from "@/lib/trpc";
 
 export default function TerminalAccessPage() {
   const [, navigate] = useLocation();
@@ -32,6 +32,18 @@ export default function TerminalAccessPage() {
     setCopied(true);
     toast.success("Command copied to clipboard!");
     setTimeout(() => setCopied(false), 2000);
+  };
+
+  const handleOpenPowerShell = (command: string) => {
+    const batchScript = `@echo off\nstart powershell -NoExit -Command "${command}"\nexit`;
+    const blob = new Blob([batchScript], { type: 'text/plain' });
+    const url = window.URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = 'ssh-connect.bat';
+    a.click();
+    window.URL.revokeObjectURL(url);
+    toast.success("SSH command file downloaded! Run it to open PowerShell.");
   };
 
   return (
@@ -186,23 +198,33 @@ export default function TerminalAccessPage() {
         </CardContent>
       </Card>
 
-      {/* Action Button */}
-      <div className="flex gap-2 pt-4">
-        <Button
-          onClick={() => handleCopyCommand(sshCommand)}
-          className="flex-1 bg-primary hover:bg-primary/90"
-          size="lg"
-        >
-          <Copy className="w-4 h-4 mr-2" />
-          Copy SSH Command
-        </Button>
+      {/* Action Buttons */}
+      <div className="flex flex-col gap-3 pt-4">
+        <div className="flex gap-2">
+          <Button
+            onClick={() => handleCopyCommand(sshCommand)}
+            className="flex-1 bg-primary hover:bg-primary/90"
+            size="lg"
+          >
+            <Copy className="w-4 h-4 mr-2" />
+            Copy SSH Command
+          </Button>
+          <Button
+            onClick={() => handleOpenPowerShell(sshCommand)}
+            className="flex-1 bg-blue-600 hover:bg-blue-700 text-white"
+            size="lg"
+          >
+            <Terminal className="w-4 h-4 mr-2" />
+            Open PowerShell
+          </Button>
+        </div>
         <Button
           variant="outline"
           onClick={() => navigate("/components")}
           size="lg"
         >
           <ArrowLeft className="w-4 h-4 mr-2" />
-          Back
+          Back to Components
         </Button>
       </div>
     </div>
