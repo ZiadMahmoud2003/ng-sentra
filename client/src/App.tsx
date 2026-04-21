@@ -15,6 +15,8 @@ import AdminUsers from "./pages/AdminUsers";
 import AdminAudit from "./pages/AdminAudit";
 import AdminSettings from "./pages/AdminSettings";
 import LoginPage from "./pages/LoginPage";
+import ConfigFileViewer from "./pages/ConfigFileViewer";
+import TerminalAccessPage from "./pages/TerminalAccessPage";
 
 function Router() {
   return (
@@ -23,6 +25,8 @@ function Router() {
       <Route path="/" component={() => <SOCLayout><Home /></SOCLayout>} />
       <Route path="/components" component={() => <SOCLayout><ComponentsGrid /></SOCLayout>} />
       <Route path="/components/:slug" component={() => <SOCLayout><ComponentViewer /></SOCLayout>} />
+      <Route path="/config/:slug" component={() => <SOCLayout><ConfigFileViewer /></SOCLayout>} />
+      <Route path="/terminal/:slug" component={() => <SOCLayout><TerminalAccessPage /></SOCLayout>} />
       <Route path="/soar" component={() => <SOCLayout><SOARPanel /></SOCLayout>} />
       <Route path="/ai-models" component={() => <SOCLayout><AIModelsPanel /></SOCLayout>} />
       <Route path="/admin/components" component={() => <SOCLayout><AdminComponents /></SOCLayout>} />

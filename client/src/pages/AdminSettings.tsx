@@ -1,5 +1,5 @@
-import { useAuth } from "@/_core/hooks/useAuth";
 import { trpc } from "@/lib/trpc";
+import { useAuth } from "@/_core/hooks/useAuth";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -14,6 +14,9 @@ const settingMeta: Record<string, { label: string; description: string; icon: an
   local_ai_brain_url:      { label: "Local AI Brain URL",       icon: Server,  placeholder: "http://192.168.1.14:5000",  description: "REST API endpoint for Local AI Brain / UBA (Waitress)" },
   soar_ssh_host:           { label: "SOAR SSH Host",            icon: Network, placeholder: "192.168.1.14",              description: "SSH host IP for executing IR scripts (IP & Behavior)" },
   soar_ssh_user:           { label: "SOAR SSH User",            icon: Network, placeholder: "ubuntu",                    description: "SSH username for connecting to the SOAR host" },
+  ssh_host:                { label: "SSH Host (Config/Terminal)", icon: Network, placeholder: "192.168.1.14",              description: "SSH host for accessing config files and terminal (Filebeat, UFW, Snort, DF Workstation)" },
+  ssh_user:                { label: "SSH User (Config/Terminal)", icon: Network, placeholder: "ubuntu",                    description: "SSH username for config file and terminal access" },
+  ssh_password:            { label: "SSH Password",             icon: Key,     placeholder: "Enter password...",         description: "SSH password for authentication", sensitive: true },
   virustotal_api_key:      { label: "VirusTotal API Key",       icon: Key,     placeholder: "Enter API key...",          description: "Used by URL real-time IR workflow for VirusTotal lookups", sensitive: true },
   abuseipdb_api_key:       { label: "AbuseIPDB API Key",        icon: Key,     placeholder: "Enter API key...",          description: "Used by IP IR workflow for AbuseIPDB reputation checks", sensitive: true },
   gemini_api_key:          { label: "Google Gemini API Key",    icon: Key,     placeholder: "Enter API key...",          description: "API key for Gemini 2.5 Flash (Alert Classification)", sensitive: true },
@@ -26,6 +29,9 @@ const settingOrder = [
   "local_ai_brain_url",
   "soar_ssh_host",
   "soar_ssh_user",
+  "ssh_host",
+  "ssh_user",
+  "ssh_password",
   "virustotal_api_key",
   "abuseipdb_api_key",
   "gemini_api_key",

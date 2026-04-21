@@ -147,3 +147,14 @@
 - [x] Update ComponentViewer: replace iframe with "Open in New Tab" launch page
 - [x] ComponentViewer launch page: show component name, icon, description, URL, and a styled launch button
 - [x] Save checkpoint v1.5
+
+## v1.6 — SSH Command Generator & Config File Viewer
+- [x] Add SSH credentials (host, user, password) to system_settings table
+- [x] Update AdminSettings page to configure SSH credentials
+- [x] Install ssh2 library for backend SSH file reading
+- [x] Build backend SSH service: read config files from server via SSH
+- [x] Build ConfigFileViewer page for Filebeat/UFW/Snort (admin-only, read-only + SSH commands)
+- [x] Build TerminalAccessPage for DF Workstation (show SSH command with copy button)
+- [x] Update ComponentViewer: route config-file to ConfigFileViewer, terminal to TerminalAccessPage
+- [x] Test SSH file reading and command generation
+- [x] Save checkpoint v1.6

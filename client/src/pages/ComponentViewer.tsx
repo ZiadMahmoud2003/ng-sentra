@@ -1,4 +1,3 @@
-import { trpc } from "@/lib/trpc";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import {
@@ -7,6 +6,7 @@ import {
 } from "lucide-react";
 import { useEffect } from "react";
 import { useLocation, useParams } from "wouter";
+import { trpc } from "@/lib/trpc";
 
 const iconMap: Record<string, React.ElementType> = {
   Shield, Globe, Terminal, FileText, Cpu, Zap, Bug, Eye, Activity, Network, Server,
@@ -155,31 +155,32 @@ export default function ComponentViewer() {
               </p>
             </div>
           ) : accessType === "config-file" ? (
-            <div className="rounded-lg border border-amber-500/20 bg-amber-500/5 p-4 flex gap-3">
-              <FileText className="w-5 h-5 text-amber-400 flex-shrink-0 mt-0.5" />
-              <div className="space-y-1">
-                <p className="text-sm font-medium text-amber-300">Configuration File Component</p>
-                <p className="text-xs text-muted-foreground">
-                  {component.name} is managed through configuration files on the SOC server.
-                  Access it via SSH or the server's file system. Admins can view and update its settings in
-                  <button onClick={() => navigate("/admin/components")} className="text-primary hover:underline ml-1">Component Config</button>.
-                </p>
-              </div>
+            <div className="space-y-3">
+              <Button
+                size="lg"
+                className="w-full gap-2 text-base font-semibold bg-amber-600 hover:bg-amber-700 text-white shadow-lg shadow-amber-600/20"
+                onClick={() => navigate(`/config/${slug}`)}
+              >
+                <FileText className="w-5 h-5" />
+                View Configuration & SSH Commands
+              </Button>
+              <p className="text-xs text-center text-muted-foreground">
+                View the current config file and get SSH commands to edit it on the server.
+              </p>
             </div>
           ) : accessType === "terminal" ? (
-            <div className="rounded-lg border border-blue-500/20 bg-blue-500/5 p-4 flex gap-3">
-              <Terminal className="w-5 h-5 text-blue-400 flex-shrink-0 mt-0.5" />
-              <div className="space-y-1">
-                <p className="text-sm font-medium text-blue-300">Terminal Access Only</p>
-                <p className="text-xs text-muted-foreground">
-                  {component.name} is accessible via SSH terminal on the SOC server. There is no web interface for this component.
-                </p>
-                {launchUrl && (
-                  <p className="text-xs font-mono text-blue-400/80 mt-2">
-                    ssh user@{component.url?.replace(/^https?:\/\//, "")}
-                  </p>
-                )}
-              </div>
+            <div className="space-y-3">
+              <Button
+                size="lg"
+                className="w-full gap-2 text-base font-semibold bg-blue-600 hover:bg-blue-700 text-white shadow-lg shadow-blue-600/20"
+                onClick={() => navigate(`/terminal/${slug}`)}
+              >
+                <Terminal className="w-5 h-5" />
+                Access via SSH Terminal
+              </Button>
+              <p className="text-xs text-center text-muted-foreground">
+                Get SSH connection details and commands to access this component.
+              </p>
             </div>
           ) : accessType === "service" ? (
             <div className="rounded-lg border border-purple-500/20 bg-purple-500/5 p-4 flex gap-3">

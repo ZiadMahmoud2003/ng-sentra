@@ -251,5 +251,30 @@ export const appRouter = router({
         return { success: true };
       }),
   }),
+
+  ssh: router({
+    readConfig: adminProcedure
+      .input(z.object({ filePath: z.string() }))
+      .query(async ({ input }) => {
+        try {
+          const { readFileViaSsh } = await import("./ssh-service");
+          const content = await readFileViaSsh(input.filePath);
+          return { success: true, content };
+        } catch (error: any) {
+          return { success: false, error: error.message };
+        }
+      }),
+
+    testConnection: adminProcedure
+      .query(async () => {
+        try {
+          const { testSSHConnection } = await import("./ssh-service");
+          const connected = await testSSHConnection();
+          return { success: connected, message: connected ? "SSH connection successful" : "SSH connection failed" };
+        } catch (error: any) {
+          return { success: false, message: error.message };
+        }
+      }),
+  }),
 });
 export type AppRouter = typeof appRouter;
