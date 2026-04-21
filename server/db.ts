@@ -1,6 +1,6 @@
 import { and, desc, eq, gte, like, lte, sql } from "drizzle-orm";
 import { drizzle } from "drizzle-orm/mysql2";
-import { AiModel, AuditLog, Component, InsertAiModel, InsertAuditLog, InsertComponent, InsertSoarApproach, InsertUser, SoarApproach, SystemSetting, User, aiModels, auditLogs, components, soarApproaches, systemSettings, users } from "../drizzle/schema";
+import { AiModel, AuditLog, Component, InsertAiModel, InsertAuditLog, InsertComponent, InsertSoarApproach, InsertUser, SoarApproach, SystemSetting, User, SshCredential, InsertSshCredential, aiModels, auditLogs, components, soarApproaches, systemSettings, users, sshCredentials } from "../drizzle/schema";
 import { ENV } from './_core/env';
 
 let _db: ReturnType<typeof drizzle> | null = null;
@@ -212,4 +212,37 @@ export async function upsertSetting(key: string, value: string, label?: string, 
   await db.insert(systemSettings)
     .values({ key, value, label: label ?? key, description: description ?? null })
     .onDuplicateKeyUpdate({ set: { value, updatedAt: new Date() } });
+}
+
+// ─── SSH Credentials ─────────────────────────────────────────────────────────
+
+export async function getSshCredentialsByComponentId(componentId: number): Promise<SshCredential | undefined> {
+  const db = await getDb();
+  if (!db) return undefined;
+  const result = await db.select().from(sshCredentials).where(eq(sshCredentials.componentId, componentId)).limit(1);
+  return result.length > 0 ? result[0] : undefined;
+}
+
+export async function getAllSshCredentials(): Promise<SshCredential[]> {
+  const db = await getDb();
+  if (!db) return [];
+  return db.select().from(sshCredentials).orderBy(sshCredentials.componentId);
+}
+
+export async function upsertSshCredential(componentId: number, data: Omit<InsertSshCredential, 'componentId'>): Promise<void> {
+  const db = await getDb();
+  if (!db) return;
+  
+  const existing = await getSshCredentialsByComponentId(componentId);
+  if (existing) {
+    await db.update(sshCredentials).set({ ...data, updatedAt: new Date() }).where(eq(sshCredentials.componentId, componentId));
+  } else {
+    await db.insert(sshCredentials).values({ componentId, ...data, createdAt: new Date(), updatedAt: new Date() } as InsertSshCredential);
+  }
+}
+
+export async function deleteSshCredential(componentId: number): Promise<void> {
+  const db = await getDb();
+  if (!db) return;
+  await db.delete(sshCredentials).where(eq(sshCredentials.componentId, componentId));
 }

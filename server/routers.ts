@@ -8,6 +8,7 @@ import {
   createAuditLog, deleteUser, getAllAiModels, getAllComponents, getAllSoarApproaches,
   getAllSettings, getAllUsers, getAuditLogs, getRecentAuditLogs, triggerSoarApproach,
   updateAiModel, updateComponent, updateSoarApproach, updateUserRole, upsertSetting,
+  getSshCredentialsByComponentId, getAllSshCredentials, upsertSshCredential, deleteSshCredential,
 } from "./db";
 
 // ─── RBAC helpers ────────────────────────────────────────────────────────────
@@ -275,6 +276,45 @@ export const appRouter = router({
           return { success: false, message: error.message };
         }
       }),
+
+    // SSH Credentials management
+    credentials: router({
+      getByComponent: protectedProcedure
+        .input(z.object({ componentId: z.number() }))
+        .query(async ({ input }) => {
+          return getSshCredentialsByComponentId(input.componentId);
+        }),
+
+      getAll: adminProcedure
+        .query(async () => {
+          return getAllSshCredentials();
+        }),
+
+      upsert: adminProcedure
+        .input(z.object({
+          componentId: z.number(),
+          host: z.string().min(1),
+          port: z.number().int().min(1).max(65535).default(22),
+          username: z.string().min(1),
+          password: z.string().min(1),
+          description: z.string().optional(),
+        }))
+        .mutation(async ({ ctx, input }) => {
+          const { componentId, ...data } = input;
+          await upsertSshCredential(componentId, data as any);
+          await logAction(ctx, "UPSERT_SSH_CREDENTIAL", `component:${componentId}`, `host=${data.host}`);
+          return { success: true };
+        }),
+
+      delete: adminProcedure
+        .input(z.object({ componentId: z.number() }))
+        .mutation(async ({ ctx, input }) => {
+          await deleteSshCredential(input.componentId);
+          await logAction(ctx, "DELETE_SSH_CREDENTIAL", `component:${input.componentId}`);
+          return { success: true };
+        }),
+    }),
   }),
 });
+
 export type AppRouter = typeof appRouter;

@@ -176,3 +176,28 @@
 - [x] Update ConfigFileViewer to embed WebTerminal for config editing
 - [x] Test terminal input/output with SSH commands (all 22 tests pass)
 - [x] Save checkpoint v1.8
+
+## v1.8 — Web-Based Terminal UI (xterm.js) - SIMPLIFIED
+- [x] Remove WebSocket SSH tunnel backend implementation
+- [x] Create SimpleBrowserSSHTerminal component with xterm.js reference terminal
+- [x] Display SSH connection instructions and commands in browser terminal
+- [x] Add quick-copy buttons for SSH and SCP commands
+- [x] Update TerminalAccessPage to use SimpleBrowserSSHTerminal
+- [x] Update ConfigFileViewer to use SimpleBrowserSSHTerminal
+- [x] All 22 tests pass
+- [x] Save checkpoint v1.8.3 (simplified approach)
+
+## v2.0 — SSH Credentials Management & Local Client Launch
+- [x] Create ssh_credentials database table with component foreign key
+- [x] Add SSH credentials CRUD tRPC procedures (admin-only)
+- [x] Create SSHCredentialsSettings component for admin panel
+- [x] Create OpenSSHButton component for Components grid and detail pages
+- [x] Implement SSH command generation (sshpass format)
+- [x] Add platform detection (Windows/macOS/Linux) for local terminal launch
+- [x] Copy SSH command to clipboard when user clicks "Open SSH"
+- [x] All 22 tests pass
+- [ ] Add OpenSSHButton to Components grid page
+- [ ] Add OpenSSHButton to component detail pages
+- [ ] Add SSHCredentialsSettings to System Settings admin panel
+- [ ] Test SSH credential configuration and launch
+- [ ] Save checkpoint v2.0

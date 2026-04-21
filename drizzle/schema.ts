@@ -87,6 +87,22 @@ export const aiModels = mysqlTable("ai_models", {
 export type AiModel = typeof aiModels.$inferSelect;
 export type InsertAiModel = typeof aiModels.$inferInsert;
 
+// SSH credentials table for component access
+export const sshCredentials = mysqlTable("ssh_credentials", {
+  id: int("id").autoincrement().primaryKey(),
+  componentId: int("componentId").notNull().references(() => components.id, { onDelete: "cascade" }),
+  host: varchar("host", { length: 256 }).notNull(),
+  port: int("port").default(22).notNull(),
+  username: varchar("username", { length: 128 }).notNull(),
+  password: text("password").notNull(), // Encrypted in production
+  description: text("description"),
+  createdAt: timestamp("createdAt").defaultNow().notNull(),
+  updatedAt: timestamp("updatedAt").defaultNow().onUpdateNow().notNull(),
+});
+
+export type SshCredential = typeof sshCredentials.$inferSelect;
+export type InsertSshCredential = typeof sshCredentials.$inferInsert;
+
 // System settings table — key/value store for global configurable settings
 export const systemSettings = mysqlTable("system_settings", {
   id: int("id").autoincrement().primaryKey(),
