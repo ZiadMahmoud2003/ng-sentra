@@ -3,6 +3,7 @@ import { useAuth } from "@/_core/hooks/useAuth";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { SSHCredentialsSettings } from "@/components/SSHCredentialsSettings";
 import { toast } from "sonner";
 import { useState, useEffect } from "react";
 import { Settings, Save, Eye, EyeOff, Globe, Server, Key, Mail, Network } from "lucide-react";
@@ -131,6 +132,9 @@ export default function AdminSettings() {
           API keys are stored in the database and used for reference only — they are not sent to the browser.
         </p>
       </div>
+
+      {/* SSH Credentials Management */}
+      <SSHCredentialsSettings />
 
       {/* Setting Groups */}
       {groups.map(group => (

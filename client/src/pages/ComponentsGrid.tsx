@@ -1,6 +1,7 @@
 import { useAuth } from "@/_core/hooks/useAuth";
 import { trpc } from "@/lib/trpc";
 import { Card, CardContent } from "@/components/ui/card";
+import { OpenSSHButton } from "@/components/OpenSSHButton";
 import {
   AlertTriangle, Bug, Eye, FileText, Globe,
   Lock, Search, Shield, Terminal, Zap, Settings, Server
@@ -177,10 +178,21 @@ export default function ComponentsGrid() {
                     )}
                   </div>
 
-                  {/* Action hint */}
-                  <p className={`text-[10px] font-mono ${clickable ? "text-primary/60 group-hover:text-primary/80" : "text-muted-foreground/30 italic"}`}>
-                    {clickable ? "Click to open →" : atCfg.hint}
-                  </p>
+                  {/* Action buttons */}
+                  <div className="flex gap-2 pt-2">
+                    {clickable && (
+                      <div className="flex-1">
+                        <p className={`text-[10px] font-mono text-primary/60 group-hover:text-primary/80 mb-1`}>
+                          Click to open →
+                        </p>
+                      </div>
+                    )}
+                    {(comp.accessType === "terminal" || comp.accessType === "config-file") && (
+                      <div className="flex-1">
+                        <OpenSSHButton componentId={comp.id} size="sm" />
+                      </div>
+                    )}
+                  </div>
                 </CardContent>
               </Card>
             );

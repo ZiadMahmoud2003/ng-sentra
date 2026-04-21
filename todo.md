@@ -196,8 +196,6 @@
 - [x] Add platform detection (Windows/macOS/Linux) for local terminal launch
 - [x] Copy SSH command to clipboard when user clicks "Open SSH"
 - [x] All 22 tests pass
-- [ ] Add OpenSSHButton to Components grid page
-- [ ] Add OpenSSHButton to component detail pages
-- [ ] Add SSHCredentialsSettings to System Settings admin panel
-- [ ] Test SSH credential configuration and launch
-- [ ] Save checkpoint v2.0
+- [x] Add OpenSSHButton to Components grid page
+- [x] Add SSHCredentialsSettings to System Settings admin panel
+- [x] Save checkpoint v2.0
