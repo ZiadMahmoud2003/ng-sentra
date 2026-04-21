@@ -8,7 +8,7 @@ import { useEffect, useState } from "react";
 import { useLocation, useParams } from "wouter";
 import { toast } from "sonner";
 import { trpc } from "@/lib/trpc";
-import WebTerminal from "@/components/WebTerminal";
+import SimpleBrowserSSHTerminal from "@/components/SimpleBrowserSSHTerminal";
 
 const configPaths: Record<string, { path: string; description: string }> = {
   filebeat: {
@@ -42,7 +42,7 @@ export default function ConfigFileViewer() {
   const component = components?.find(c => c.slug === slug);
   const configInfo = configPaths[slug];
 
-  // Get SSH credentials from settings (for display only)
+  // Get SSH credentials from settings
   const sshSettings = settings?.reduce((acc: any, s: any) => {
     acc[s.key] = s.value;
     return acc;
@@ -50,6 +50,7 @@ export default function ConfigFileViewer() {
 
   const sshHost = sshSettings?.ssh_host ?? "192.168.1.14";
   const sshUser = sshSettings?.ssh_user ?? "ubuntu";
+  const sshPassword = sshSettings?.ssh_password ?? "";
 
   const sshCommand = `ssh ${sshUser}@${sshHost}`;
   const scpCommand = `scp ${sshUser}@${sshHost}:${configInfo?.path} ./`;
@@ -96,7 +97,12 @@ export default function ConfigFileViewer() {
 
         {/* Terminal */}
         <div className="flex-1 overflow-hidden p-4">
-          <WebTerminal componentSlug={slug} filePath={configInfo.path} />
+          <SimpleBrowserSSHTerminal
+            host={sshHost}
+            user={sshUser}
+            password={sshPassword}
+            filePath={configInfo.path}
+          />
         </div>
       </div>
     );
