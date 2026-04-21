@@ -8,7 +8,7 @@ import { useState } from "react";
 import { useLocation } from "wouter";
 import { toast } from "sonner";
 import { trpc } from "@/lib/trpc";
-import SimpleBrowserSSHTerminal from "@/components/SimpleBrowserSSHTerminal";
+import WebTerminal from "@/components/WebTerminal";
 
 export default function TerminalAccessPage() {
   const [, navigate] = useLocation();
@@ -18,7 +18,7 @@ export default function TerminalAccessPage() {
   const { data: settings } = trpc.settings.list.useQuery();
   const { data: sshTestResult } = trpc.ssh.testConnection.useQuery();
 
-  // Get SSH credentials from settings
+  // Get SSH credentials from settings (for display only)
   const sshSettings = settings?.reduce((acc: any, s: any) => {
     acc[s.key] = s.value;
     return acc;
@@ -26,7 +26,6 @@ export default function TerminalAccessPage() {
 
   const sshHost = sshSettings?.ssh_host ?? "192.168.1.14";
   const sshUser = sshSettings?.ssh_user ?? "ubuntu";
-  const sshPassword = sshSettings?.ssh_password ?? "";
 
   const sshCommand = `ssh ${sshUser}@${sshHost}`;
 
@@ -58,11 +57,7 @@ export default function TerminalAccessPage() {
 
         {/* Terminal */}
         <div className="flex-1 overflow-hidden p-4">
-          <SimpleBrowserSSHTerminal
-            host={sshHost}
-            user={sshUser}
-            password={sshPassword}
-          />
+          <WebTerminal componentSlug="df-workstation" />
         </div>
       </div>
     );
