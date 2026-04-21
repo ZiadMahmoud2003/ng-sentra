@@ -9,7 +9,12 @@ import viteConfig from "../../vite.config";
 export async function setupVite(app: Express, server: Server) {
   const serverOptions = {
     middlewareMode: true,
-    hmr: { server },
+    hmr: {
+      server,
+      protocol: "wss",
+      host: undefined,
+      port: undefined,
+    },
     allowedHosts: true as const,
   };
 
@@ -18,6 +23,9 @@ export async function setupVite(app: Express, server: Server) {
     configFile: false,
     server: serverOptions,
     appType: "custom",
+    define: {
+      __DEV__: "true",
+    },
   });
 
   app.use(vite.middlewares);
