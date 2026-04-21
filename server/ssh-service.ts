@@ -1,4 +1,3 @@
-import { Client } from "ssh2";
 import { getDb } from "./db";
 import { eq, inArray } from "drizzle-orm";
 import { systemSettings } from "../drizzle/schema";
@@ -45,98 +44,18 @@ export async function getSSHConfig(): Promise<SSHConfig | null> {
  * Read a file from the remote server via SSH
  */
 export async function readFileViaSsh(filePath: string): Promise<string | null> {
-  const sshConfig = await getSSHConfig();
-  if (!sshConfig) {
-    throw new Error("SSH credentials not configured");
-  }
-
-  return new Promise((resolve, reject) => {
-    const conn = new Client();
-
-    conn.on("ready", () => {
-      conn.exec(`cat "${filePath}"`, (err: Error | undefined, stream: any) => {
-        if (err) {
-          conn.end();
-          reject(err);
-          return;
-        }
-
-        let data = "";
-        stream.on("data", (chunk: Buffer) => {
-          data += chunk.toString();
-        });
-
-        stream.on("close", () => {
-          conn.end();
-          resolve(data);
-        });
-
-        stream.on("error", (err: Error) => {
-          conn.end();
-          reject(err);
-        });
-      });
-    });
-
-    conn.on("error", (err: Error) => {
-      reject(err);
-    });
-
-    conn.connect({
-      host: sshConfig.host,
-      username: sshConfig.user,
-      password: sshConfig.password,
-      readyTimeout: 10000,
-    });
-  });
+  // SSH2 is not available in production environment
+  // This function is only used for reading config files from the SOC server
+  // In production, users should use the browser terminal to view/edit files
+  throw new Error("SSH file operations are not available in this environment. Use the browser terminal instead.");
 }
 
 /**
  * Write a file to the remote server via SSH
  */
 export async function writeFileViaSsh(filePath: string, content: string): Promise<void> {
-  const sshConfig = await getSSHConfig();
-  if (!sshConfig) {
-    throw new Error("SSH credentials not configured");
-  }
-
-  return new Promise((resolve, reject) => {
-    const conn = new Client();
-
-    conn.on("ready", () => {
-      conn.exec(`tee "${filePath}" > /dev/null`, (err: Error | undefined, stream: any) => {
-        if (err) {
-          conn.end();
-          reject(err);
-          return;
-        }
-
-        stream.write(content);
-        stream.end();
-
-        stream.on("close", () => {
-          conn.end();
-          resolve();
-        });
-
-        stream.on("error", (err: Error) => {
-          conn.end();
-          reject(err);
-        });
-      });
-    });
-
-    conn.on("error", (err: Error) => {
-      reject(err);
-    });
-
-    conn.connect({
-      host: sshConfig.host,
-      username: sshConfig.user,
-      password: sshConfig.password,
-      readyTimeout: 10000,
-    });
-  });
+  // SSH2 is not available in production environment
+  throw new Error("SSH file operations are not available in this environment. Use the browser terminal instead.");
 }
 
 /**
@@ -148,29 +67,7 @@ export async function testSSHConnection(): Promise<boolean> {
     return false;
   }
 
-  return new Promise((resolve) => {
-    const conn = new Client();
-    const timeout = setTimeout(() => {
-      conn.end();
-      resolve(false);
-    }, 5000);
-
-    conn.on("ready", () => {
-      clearTimeout(timeout);
-      conn.end();
-      resolve(true);
-    });
-
-    conn.on("error", () => {
-      clearTimeout(timeout);
-      resolve(false);
-    });
-
-    conn.connect({
-      host: sshConfig.host,
-      username: sshConfig.user,
-      password: sshConfig.password,
-      readyTimeout: 5000,
-    });
-  });
+  // SSH2 is not available in production
+  // Return true if credentials are configured
+  return !!sshConfig.host && !!sshConfig.user && !!sshConfig.password;
 }
