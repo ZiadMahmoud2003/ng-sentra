@@ -39,15 +39,18 @@ export function WazuhSettings() {
   });
 
   const [testLoading, setTestLoading] = React.useState(false);
+  const testConnectionQuery = trpc.wazuh.testConnection.useQuery(undefined, {
+    enabled: false, // Don't auto-fetch
+  });
 
   const handleTestConnection = async () => {
     setTestLoading(true);
     try {
-      const result = await (trpc.wazuh.testConnection as any).query();
-      if (result.success) {
+      const result = await testConnectionQuery.refetch();
+      if (result.data?.success) {
         toast.success("Wazuh connection successful!");
       } else {
-        toast.error(`Connection failed: ${result.message}`);
+        toast.error(`Connection failed: ${result.data?.message || 'Unknown error'}`);
       }
     } catch (error: any) {
       toast.error(`Test failed: ${error.message}`);

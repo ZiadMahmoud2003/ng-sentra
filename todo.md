@@ -218,6 +218,11 @@
 - [x] All 22 tests pass
 - [x] Save checkpoint v2.2
 
+## v3.0 — Real-Time Wazuh Alert Feed Widget (COMPLETE)
+
+### v3.0.1 — Bug Fixes
+- [x] Fix Wazuh test connection button error in WazuhSettings component
+
 ## v3.0 — Real-Time Wazuh Alert Feed Widget
 - [x] Create wazuh_settings table to store Wazuh API and Elasticsearch configuration
 - [x] Create Wazuh Elasticsearch query service in server (fetchWazuhAlerts, testWazuhConnection)
@@ -232,3 +237,4 @@
 - [x] Wazuh connection test validates credentials are correctly configured
 - [x] Dashboard displays Wazuh alert feed widget with proper error handling
 - [x] Save checkpoint v3.0
+- [x] Fix Wazuh test connection button error ("e[l] is not a function")
