@@ -228,6 +228,7 @@
 - [x] Add SSL certificate bypass for self-signed Elasticsearch/OpenSearch certificates
 - [x] Replace fetch with axios for better SSL/HTTPS handling
 - [x] Create standalone test script for local network verification
+- [x] Create comprehensive DEPLOYMENT.md guide for local network setup
 
 ## v3.0 — Real-Time Wazuh Alert Feed Widget
 - [x] Create wazuh_settings table to store Wazuh API and Elasticsearch configuration
