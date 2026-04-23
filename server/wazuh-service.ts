@@ -1,6 +1,6 @@
 import { getWazuhSettings } from "./db";
+import axios from "axios";
 import https from "https";
-import http from "http";
 
 export interface WazuhAlert {
   id: string;
@@ -16,6 +16,20 @@ export interface WazuhAlert {
 }
 
 /**
+ * Create axios instance with SSL bypass for self-signed certificates
+ */
+function createAxiosInstance(url: string) {
+  const httpsAgent = new https.Agent({
+    rejectUnauthorized: false,
+  });
+
+  return axios.create({
+    httpsAgent,
+    timeout: 10000,
+  });
+}
+
+/**
  * Fetch recent alerts from Wazuh Elasticsearch
  */
 export async function fetchWazuhAlerts(limit: number = 50): Promise<WazuhAlert[]> {
@@ -26,7 +40,7 @@ export async function fetchWazuhAlerts(limit: number = 50): Promise<WazuhAlert[]
       throw new Error("Wazuh Elasticsearch URL not configured");
     }
 
-    const url = new URL("/_search", settings.elasticsearchUrl);
+    const client = createAxiosInstance(settings.elasticsearchUrl);
     
     const query = {
       size: limit,
@@ -41,30 +55,21 @@ export async function fetchWazuhAlerts(limit: number = 50): Promise<WazuhAlert[]
     };
 
     // Add basic auth if credentials are provided
+    let auth = undefined;
     if (settings.elasticsearchUsername && settings.elasticsearchPassword) {
-      const auth = Buffer.from(
-        `${settings.elasticsearchUsername}:${settings.elasticsearchPassword}`
-      ).toString("base64");
-      headers["Authorization"] = `Basic ${auth}`;
+      auth = {
+        username: settings.elasticsearchUsername,
+        password: settings.elasticsearchPassword,
+      };
     }
 
-    // Create HTTPS agent that accepts self-signed certificates
-    const agent = url.protocol === "https:" 
-      ? new https.Agent({ rejectUnauthorized: false })
-      : new http.Agent();
+    const response = await client.post(
+      `${settings.elasticsearchUrl}/_search`,
+      query,
+      { headers, auth }
+    );
 
-    const response = await fetch(url.toString(), {
-      method: "POST",
-      headers,
-      body: JSON.stringify(query),
-      agent: agent as any,
-    } as any);
-
-    if (!response.ok) {
-      throw new Error(`Elasticsearch error: ${response.statusText}`);
-    }
-
-    const data = await response.json() as any;
+    const data = response.data as any;
     const hits = data.hits?.hits || [];
 
     return hits.map((hit: any) => {
@@ -101,43 +106,37 @@ export async function testWazuhConnection(): Promise<{ success: boolean; message
 
     console.log("[Wazuh] Testing connection to:", settings.elasticsearchUrl);
 
-    const url = new URL("/_cluster/health", settings.elasticsearchUrl);
+    const client = createAxiosInstance(settings.elasticsearchUrl);
     
     const headers: Record<string, string> = {};
 
+    let auth = undefined;
     if (settings.elasticsearchUsername && settings.elasticsearchPassword) {
-      const auth = Buffer.from(
-        `${settings.elasticsearchUsername}:${settings.elasticsearchPassword}`
-      ).toString("base64");
-      headers["Authorization"] = `Basic ${auth}`;
+      auth = {
+        username: settings.elasticsearchUsername,
+        password: settings.elasticsearchPassword,
+      };
       console.log("[Wazuh] Using authentication with username:", settings.elasticsearchUsername);
     } else {
       console.log("[Wazuh] No authentication configured");
     }
 
-    console.log("[Wazuh] Sending request to:", url.toString());
+    console.log("[Wazuh] Sending request to:", `${settings.elasticsearchUrl}/_cluster/health`);
     
-    // Create HTTPS agent that accepts self-signed certificates
-    const agent = url.protocol === "https:" 
-      ? new https.Agent({ rejectUnauthorized: false })
-      : new http.Agent();
-    
-    const response = await fetch(url.toString(), {
-      method: "GET",
-      headers,
-      agent: agent as any,
-    } as any);
+    const response = await client.get(
+      `${settings.elasticsearchUrl}/_cluster/health`,
+      { headers, auth }
+    );
 
-    console.log("[Wazuh] Response status:", response.status, response.statusText);
+    console.log("[Wazuh] Response status:", response.status);
 
-    if (response.ok) {
-      const data = await response.json() as any;
+    if (response.status === 200) {
+      const data = response.data as any;
       const message = `Connected successfully. Cluster status: ${data.status}`;
       console.log("[Wazuh]", message);
       return { success: true, message };
     } else {
-      const errorText = await response.text();
-      const message = `HTTP ${response.status}: ${errorText.substring(0, 100)}`;
+      const message = `HTTP ${response.status}: Unexpected response`;
       console.error("[Wazuh] Connection failed:", message);
       return { success: false, message };
     }
@@ -147,12 +146,16 @@ export async function testWazuhConnection(): Promise<{ success: boolean; message
     // Provide helpful error messages based on error type
     let message = "Unknown error";
     
-    if (error?.cause?.code === 'UND_ERR_CONNECT_TIMEOUT') {
-      message = "Connection timeout: Elasticsearch is not reachable. Check if the URL is correct and accessible from your network.";
-    } else if (error?.code === 'ECONNREFUSED') {
+    if (error?.code === 'ECONNREFUSED') {
       message = "Connection refused: Elasticsearch is not running or the port is incorrect.";
     } else if (error?.code === 'ENOTFOUND') {
       message = "DNS error: Cannot resolve the Elasticsearch hostname.";
+    } else if (error?.code === 'ECONNABORTED' || error?.message?.includes('timeout')) {
+      message = "Connection timeout: Elasticsearch is not reachable. Check if the URL is correct and accessible from your network.";
+    } else if (error?.response?.status === 401) {
+      message = "Authentication failed: Invalid username or password.";
+    } else if (error?.response?.status === 403) {
+      message = "Access forbidden: User does not have permission to access Elasticsearch.";
     } else if (error?.message) {
       message = `Error: ${error.message}`;
     }
