@@ -1,14 +1,76 @@
 import { and, desc, eq, gte, like, lte, sql } from "drizzle-orm";
 import { drizzle } from "drizzle-orm/mysql2";
+import { createPool, type PoolOptions } from "mysql2";
 import { AiModel, AuditLog, Component, InsertAiModel, InsertAuditLog, InsertComponent, InsertSoarApproach, InsertUser, SoarApproach, SystemSetting, User, SshCredential, InsertSshCredential, WazuhSetting, InsertWazuhSetting, aiModels, auditLogs, components, soarApproaches, systemSettings, users, sshCredentials, wazuhSettings } from "../drizzle/schema";
 import { ENV } from './_core/env';
 
 let _db: ReturnType<typeof drizzle> | null = null;
+let _dbInitAttempted = false;
+
+function getBooleanFlag(value: string | null) {
+  if (!value) return undefined;
+  const normalized = value.trim().toLowerCase();
+  if (["1", "true", "yes", "on"].includes(normalized)) return true;
+  if (["0", "false", "no", "off"].includes(normalized)) return false;
+  return undefined;
+}
+
+function parseSslFromUrl(url: URL) {
+  const raw = url.searchParams.get("ssl");
+  if (!raw) return undefined;
+
+  // Supports ssl=true/false and JSON object value.
+  const bool = getBooleanFlag(raw);
+  if (bool !== undefined) {
+    return bool ? { rejectUnauthorized: true } : undefined;
+  }
+
+  try {
+    const parsed = JSON.parse(raw) as unknown;
+    if (parsed && typeof parsed === "object") {
+      return parsed as Record<string, unknown>;
+    }
+  } catch {
+    // Some URLs encode JSON with escaped quotes like {\"rejectUnauthorized\":true}.
+    try {
+      const normalized = raw.replace(/\\"/g, '"');
+      const parsed = JSON.parse(normalized) as unknown;
+      if (parsed && typeof parsed === "object") {
+        return parsed as Record<string, unknown>;
+      }
+    } catch {
+      // Ignore invalid ssl JSON and continue without SSL override.
+    }
+  }
+
+  return undefined;
+}
+
+function toPoolOptions(databaseUrl: string): PoolOptions {
+  const url = new URL(databaseUrl);
+  const database = url.pathname.replace(/^\//, "");
+  const port = url.port ? Number(url.port) : 3306;
+  const ssl = parseSslFromUrl(url);
+
+  return {
+    host: url.hostname,
+    port,
+    user: decodeURIComponent(url.username),
+    password: decodeURIComponent(url.password),
+    database,
+    // TiDB Cloud requires secure transport.
+    ssl: ssl ?? { rejectUnauthorized: true },
+    waitForConnections: true,
+    connectionLimit: 10,
+  };
+}
 
 export async function getDb() {
-  if (!_db && process.env.DATABASE_URL) {
+  if (!_db && !_dbInitAttempted && ENV.databaseUrl) {
+    _dbInitAttempted = true;
     try {
-      _db = drizzle(process.env.DATABASE_URL);
+      const pool = createPool(toPoolOptions(ENV.databaseUrl));
+      _db = drizzle({ client: pool });
     } catch (error) {
       console.warn("[Database] Failed to connect:", error);
       _db = null;

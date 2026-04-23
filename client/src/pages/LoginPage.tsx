@@ -8,6 +8,7 @@ import { useAuth } from "@/_core/hooks/useAuth";
 export default function LoginPage() {
   const { isAuthenticated, loading } = useAuth();
   const [, navigate] = useLocation();
+  const localAuthEnabled = import.meta.env.VITE_LOCAL_AUTH_ENABLED === "true";
 
   useEffect(() => {
     if (!loading && isAuthenticated) navigate("/");
@@ -87,7 +88,7 @@ export default function LoginPage() {
           <div className="flex items-center gap-3">
             <div className="flex-1 h-px bg-border" />
             <span className="text-[10px] font-mono text-muted-foreground/50 uppercase tracking-widest">
-              Manus OAuth
+              {localAuthEnabled ? "Local Authentication" : "Manus OAuth"}
             </span>
             <div className="flex-1 h-px bg-border" />
           </div>
@@ -97,7 +98,7 @@ export default function LoginPage() {
             onClick={() => (window.location.href = getLoginUrl())}
           >
             <Shield className="w-4 h-4" />
-            Sign In to NG-SENTRA
+            {localAuthEnabled ? "Sign In Locally" : "Sign In to NG-SENTRA"}
           </Button>
 
           {/* Role info */}

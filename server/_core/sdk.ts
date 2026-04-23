@@ -31,11 +31,6 @@ const GET_USER_INFO_WITH_JWT_PATH = `/webdev.v1.WebDevAuthPublicService/GetUserI
 class OAuthService {
   constructor(private client: ReturnType<typeof axios.create>) {
     console.log("[OAuth] Initialized with baseURL:", ENV.oAuthServerUrl);
-    if (!ENV.oAuthServerUrl) {
-      console.error(
-        "[OAuth] ERROR: OAUTH_SERVER_URL is not configured! Set OAUTH_SERVER_URL environment variable."
-      );
-    }
   }
 
   private decodeState(state: string): string {
@@ -168,10 +163,11 @@ class SDKServer {
     openId: string,
     options: { expiresInMs?: number; name?: string } = {}
   ): Promise<string> {
+    const appId = ENV.appId || "local-app";
     return this.signSession(
       {
         openId,
-        appId: ENV.appId,
+        appId,
         name: options.name || "",
       },
       options
@@ -270,8 +266,39 @@ class SDKServer {
     const signedInAt = new Date();
     let user = await db.getUserByOpenId(sessionUserId);
 
+    const localSessionUser = (): User => ({
+      id: 0,
+      openId: sessionUserId,
+      name: session.name || ENV.localAuthName,
+      email: ENV.localAuthEmail,
+      role: ENV.localAuthRole as any,
+      loginMethod: "local",
+      createdAt: signedInAt,
+      updatedAt: signedInAt,
+      lastSignedIn: signedInAt,
+    });
+
+    if (!user && ENV.localAuthEnabled) {
+      try {
+        await db.upsertUser({
+          openId: sessionUserId,
+          name: session.name || ENV.localAuthName,
+          email: ENV.localAuthEmail,
+          role: ENV.localAuthRole as any,
+          loginMethod: "local",
+          lastSignedIn: signedInAt,
+        });
+      } catch (error) {
+        console.warn("[Auth] Failed to upsert local user, using session fallback", error);
+      }
+      user = await db.getUserByOpenId(sessionUserId);
+      if (!user) {
+        return localSessionUser();
+      }
+    }
+
     // If user not in DB, sync from OAuth server automatically
-    if (!user) {
+    if (!user && !ENV.localAuthEnabled) {
       try {
         const userInfo = await this.getUserInfoWithJwt(sessionCookie ?? "");
         await db.upsertUser({
@@ -292,10 +319,12 @@ class SDKServer {
       throw ForbiddenError("User not found");
     }
 
-    await db.upsertUser({
-      openId: user.openId,
-      lastSignedIn: signedInAt,
-    });
+    if (!ENV.localAuthEnabled) {
+      await db.upsertUser({
+        openId: user.openId,
+        lastSignedIn: signedInAt,
+      });
+    }
 
     return user;
   }

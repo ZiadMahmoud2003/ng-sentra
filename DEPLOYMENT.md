@@ -42,10 +42,16 @@ Create a `.env.local` file in the project root with your database connection:
 # Database connection (TiDB or MySQL)
 DATABASE_URL="mysql://username:password@host:port/database_name?ssl=true"
 
-# OAuth (from Manus)
-VITE_APP_ID=your_app_id
-OAUTH_SERVER_URL=https://api.manus.im
-VITE_OAUTH_PORTAL_URL=https://portal.manus.im
+# Local auth mode (recommended for self-hosted)
+LOCAL_AUTH_ENABLED=true
+VITE_LOCAL_AUTH_ENABLED=true
+LOCAL_AUTH_OPEN_ID=local-admin
+LOCAL_AUTH_NAME=Local Admin
+LOCAL_AUTH_EMAIL=admin@localhost
+LOCAL_AUTH_ROLE=Admin
+VITE_APP_ID=local-app
+OAUTH_SERVER_URL=
+VITE_OAUTH_PORTAL_URL=
 JWT_SECRET=your_jwt_secret
 
 # Wazuh/Elasticsearch (your local instance)
@@ -79,7 +85,7 @@ You should see the NG-SENTRA dashboard.
 
 ## Step 6: Test Wazuh Connection
 
-1. Log in to the dashboard
+1. Click **Sign In Locally** on the login page
 2. Go to **System Settings** → **Wazuh Configuration**
 3. Click **Test Connection**
 4. You should see: ✅ **"Connected successfully. Cluster status: yellow"**

@@ -1,14 +1,19 @@
-import "dotenv/config";
+import dotenv from "dotenv";
 import express from "express";
 import { createServer } from "http";
 import net from "net";
 import { createExpressMiddleware } from "@trpc/server/adapters/express";
+import { registerLocalAuthRoutes } from "./localAuth";
 import { registerOAuthRoutes } from "./oauth";
 import { registerStorageProxy } from "./storageProxy";
 import { setupTerminalHandler } from "./terminalHandler";
 import { appRouter } from "../routers";
 import { createContext } from "./context";
 import { serveStatic, setupVite } from "./vite";
+
+// Load .env first, then override with .env.local when present.
+dotenv.config();
+dotenv.config({ path: ".env.local", override: true });
 
 function isPortAvailable(port: number): Promise<boolean> {
   return new Promise(resolve => {
@@ -36,6 +41,7 @@ async function startServer() {
   app.use(express.json({ limit: "50mb" }));
   app.use(express.urlencoded({ limit: "50mb", extended: true }));
   registerStorageProxy(app);
+  registerLocalAuthRoutes(app);
   registerOAuthRoutes(app);
   setupTerminalHandler(server);
   // tRPC API

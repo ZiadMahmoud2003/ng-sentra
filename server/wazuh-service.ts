@@ -44,9 +44,11 @@ export async function fetchWazuhAlerts(limit: number = 50): Promise<WazuhAlert[]
     
     const query = {
       size: limit,
-      sort: [{ timestamp: { order: "desc" } }],
+      sort: [{ timestamp: { order: "desc", unmapped_type: "date" } }],
       query: {
-        match_all: {},
+        bool: {
+          filter: [{ exists: { field: "rule.id" } }],
+        },
       },
     };
 
@@ -63,8 +65,9 @@ export async function fetchWazuhAlerts(limit: number = 50): Promise<WazuhAlert[]
       };
     }
 
+    const indexPattern = settings.alertIndexPattern || "wazuh-alerts-*";
     const response = await client.post(
-      `${settings.elasticsearchUrl}/_search`,
+      `${settings.elasticsearchUrl}/${encodeURIComponent(indexPattern)}/_search`,
       query,
       { headers, auth }
     );
@@ -72,19 +75,47 @@ export async function fetchWazuhAlerts(limit: number = 50): Promise<WazuhAlert[]
     const data = response.data as any;
     const hits = data.hits?.hits || [];
 
+    const read = (obj: any, path: string[]): unknown =>
+      path.reduce((acc: any, key) => (acc && typeof acc === "object" ? acc[key] : undefined), obj);
+
     return hits.map((hit: any) => {
       const source = hit._source || {};
+      const ruleDescription =
+        (read(source, ["rule", "description"]) as string | undefined) ||
+        (read(source, ["message"]) as string | undefined) ||
+        (read(source, ["full_log"]) as string | undefined) ||
+        "Unknown Rule";
+      const ruleId =
+        (read(source, ["rule", "id"]) as string | number | undefined) ??
+        (read(source, ["rule", "sid"]) as string | number | undefined) ??
+        "unknown";
+      const levelRaw =
+        (read(source, ["rule", "level"]) as number | string | undefined) ??
+        (read(source, ["severity"]) as number | string | undefined) ??
+        0;
+      const severity = typeof levelRaw === "number" ? levelRaw : Number(levelRaw) || 0;
+      const action =
+        (read(source, ["action"]) as string | undefined) ||
+        (read(source, ["data", "action"]) as string | undefined) ||
+        (read(source, ["syscheck", "event"]) as string | undefined) ||
+        (read(source, ["rule", "groups", 0 as any]) as string | undefined) ||
+        "unknown";
+
       return {
         id: hit._id,
-        timestamp: source.timestamp || new Date().toISOString(),
-        rule_id: source.rule?.id || "unknown",
-        rule_description: source.rule?.description || "Unknown Rule",
-        severity: source.rule?.level || 0,
-        agent_id: source.agent?.id || "unknown",
-        agent_name: source.agent?.name || "Unknown Agent",
-        source_ip: source.source?.ip,
-        destination_ip: source.destination?.ip,
-        action: source.action || "unknown",
+        timestamp: (read(source, ["timestamp"]) as string | undefined) || new Date().toISOString(),
+        rule_id: String(ruleId),
+        rule_description: ruleDescription,
+        severity,
+        agent_id: String((read(source, ["agent", "id"]) as string | number | undefined) ?? "unknown"),
+        agent_name: String((read(source, ["agent", "name"]) as string | undefined) ?? "Unknown Agent"),
+        source_ip:
+          (read(source, ["source", "ip"]) as string | undefined) ||
+          (read(source, ["data", "srcip"]) as string | undefined),
+        destination_ip:
+          (read(source, ["destination", "ip"]) as string | undefined) ||
+          (read(source, ["data", "dstip"]) as string | undefined),
+        action,
       };
     });
   } catch (error) {
