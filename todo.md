@@ -206,3 +206,14 @@
 - [x] Update OpenSSHButton to open embedded terminal modal instead of copying command
 - [x] All 22 tests pass
 - [x] Save checkpoint v2.1
+
+## v2.2 — Local Terminal Launch with SSH Command (Option A)
+- [x] Remove embedded WebSocket terminal implementation (BrowserSSHTerminal)
+- [x] Rewrite OpenSSHButton to generate SSH command and open local terminal
+- [x] Implement platform-specific terminal launch:
+  - Windows: Download PowerShell script (.ps1) that opens terminal with SSH command
+  - macOS: Download AppleScript (.scpt) that opens Terminal with SSH command
+  - Linux: Copy SSH command to clipboard for manual paste
+- [x] Add Copy button to manually copy SSH command
+- [x] All 22 tests pass
+- [x] Save checkpoint v2.2
