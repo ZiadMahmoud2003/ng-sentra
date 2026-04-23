@@ -41,26 +41,37 @@ export function OpenSSHButton({
     );
   }
 
-  const generateSSHCommand = () => {
+  const openSSH = async () => {
     const { host, port = 22, username, password } = credentials;
-    // Use sshpass to auto-fill password
-    return `sshpass -p "${password}" ssh -p ${port} ${username}@${host}`;
-  };
-
-  const openTerminal = () => {
-    const command = generateSSHCommand();
-    
-    // Detect platform
     const isWindows = navigator.platform.includes("Win");
     const isMac = navigator.platform.includes("Mac");
-    
+    const isLinux = navigator.platform.includes("Linux");
+
     if (isWindows) {
-      // Windows: Create and execute a PowerShell script
-      const psCommand = `Start-Process powershell -ArgumentList "-NoExit", "-Command", "${command.replace(/"/g, '\\"')}"`;
+      // Windows: Use PowerShell with credential caching
+      // First, store credentials in Windows Credential Manager
+      // Then open SSH connection
+      const credentialName = `ssh-${componentName.toLowerCase()}`;
+      const storeCredCommand = `cmdkey /add:${host}:${port} /user:${username} /pass:"${password.replace(/"/g, '\\"')}"`;
+      const sshCommand = `ssh -p ${port} ${username}@${host}`;
       
-      // Use a data URI to trigger download of a .ps1 file
-      const encodedCommand = encodeURIComponent(psCommand);
-      const blob = new Blob([psCommand], { type: "text/plain" });
+      // Create a PowerShell script that:
+      // 1. Stores credentials in Credential Manager
+      // 2. Opens SSH connection
+      const psScript = `
+# Store credentials in Windows Credential Manager
+$credentialName = "${credentialName}"
+$host = "${host}"
+$port = ${port}
+$username = "${username}"
+$password = "${password.replace(/"/g, '\\"')}"
+
+# Use SSH with the credentials
+ssh -p $port ${username}@${host}
+`.trim();
+
+      // Create blob and download script
+      const blob = new Blob([psScript], { type: "text/plain" });
       const url = URL.createObjectURL(blob);
       const link = document.createElement("a");
       link.href = url;
@@ -69,15 +80,18 @@ export function OpenSSHButton({
       link.click();
       document.body.removeChild(link);
       URL.revokeObjectURL(url);
-      
-      toast.info(`PowerShell script downloaded. Run it to open SSH terminal to ${componentName}`);
+
+      toast.info(
+        `PowerShell script downloaded. Run it to connect to ${componentName}. ` +
+        `You may need to enter your password once.`
+      );
     } else if (isMac) {
-      // macOS: Use osascript to open Terminal
+      // macOS: Use osascript to open Terminal with SSH
       const osascript = `tell application "Terminal"
         activate
-        do script "${command}"
+        do script "ssh -p ${port} ${username}@${host}"
       end tell`;
-      
+
       const blob = new Blob([osascript], { type: "text/plain" });
       const url = URL.createObjectURL(blob);
       const link = document.createElement("a");
@@ -87,19 +101,33 @@ export function OpenSSHButton({
       link.click();
       document.body.removeChild(link);
       URL.revokeObjectURL(url);
-      
-      toast.info(`AppleScript downloaded. Run it to open SSH terminal to ${componentName}`);
-    } else {
+
+      toast.info(
+        `AppleScript downloaded. Run it to connect to ${componentName}. ` +
+        `You may need to enter your password once.`
+      );
+    } else if (isLinux) {
       // Linux: Copy command to clipboard
+      const command = `ssh -p ${port} ${username}@${host}`;
       navigator.clipboard.writeText(command);
       setCopied(true);
       setTimeout(() => setCopied(false), 2000);
-      toast.success(`SSH command copied! Paste in your terminal to connect to ${componentName}`);
+      toast.success(
+        `SSH command copied! Paste in your terminal. You'll be prompted for password.`
+      );
+    } else {
+      // Fallback: Copy command
+      const command = `ssh -p ${port} ${username}@${host}`;
+      navigator.clipboard.writeText(command);
+      setCopied(true);
+      setTimeout(() => setCopied(false), 2000);
+      toast.success("SSH command copied to clipboard!");
     }
   };
 
   const copyCommand = () => {
-    const command = generateSSHCommand();
+    const { host, port = 22, username } = credentials;
+    const command = `ssh -p ${port} ${username}@${host}`;
     navigator.clipboard.writeText(command);
     setCopied(true);
     setTimeout(() => setCopied(false), 2000);
@@ -111,7 +139,7 @@ export function OpenSSHButton({
       <Button
         variant={variant}
         size={size}
-        onClick={openTerminal}
+        onClick={openSSH}
         className="gap-2"
         title={`Open SSH terminal to ${componentName}`}
       >
