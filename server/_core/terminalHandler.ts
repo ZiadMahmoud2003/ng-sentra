@@ -3,6 +3,7 @@ import { Server } from "http";
 import { nanoid } from "nanoid";
 import { createTerminalSession, sendTerminalInput, closeTerminalSession } from "../terminal-service";
 import { sdk } from "./sdk";
+import { getSshCredentialsByComponentId } from "../db";
 
 
 /**
@@ -69,8 +70,7 @@ function handleTerminalConnection(ws: any, user: any, sdk: any): void {
         let sshConfig: any = null;
         if (componentId) {
           try {
-            const result = await sdk.call("ssh.credentials.getByComponent", { componentId });
-            sshConfig = result;
+            sshConfig = await getSshCredentialsByComponentId(componentId);
           } catch (error) {
             console.error("[Terminal] Failed to fetch component SSH credentials:", error);
           }
