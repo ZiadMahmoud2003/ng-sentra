@@ -1,4 +1,6 @@
 import { getWazuhSettings } from "./db";
+import https from "https";
+import http from "http";
 
 export interface WazuhAlert {
   id: string;
@@ -46,11 +48,17 @@ export async function fetchWazuhAlerts(limit: number = 50): Promise<WazuhAlert[]
       headers["Authorization"] = `Basic ${auth}`;
     }
 
+    // Create HTTPS agent that accepts self-signed certificates
+    const agent = url.protocol === "https:" 
+      ? new https.Agent({ rejectUnauthorized: false })
+      : new http.Agent();
+
     const response = await fetch(url.toString(), {
       method: "POST",
       headers,
       body: JSON.stringify(query),
-    });
+      agent: agent as any,
+    } as any);
 
     if (!response.ok) {
       throw new Error(`Elasticsearch error: ${response.statusText}`);
@@ -109,10 +117,16 @@ export async function testWazuhConnection(): Promise<{ success: boolean; message
 
     console.log("[Wazuh] Sending request to:", url.toString());
     
+    // Create HTTPS agent that accepts self-signed certificates
+    const agent = url.protocol === "https:" 
+      ? new https.Agent({ rejectUnauthorized: false })
+      : new http.Agent();
+    
     const response = await fetch(url.toString(), {
       method: "GET",
       headers,
-    });
+      agent: agent as any,
+    } as any);
 
     console.log("[Wazuh] Response status:", response.status, response.statusText);
 

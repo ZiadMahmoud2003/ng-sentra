@@ -225,6 +225,7 @@
 - [x] Add enhanced error messages to Wazuh connection diagnostics
 - [x] Improve logging for connection troubleshooting
 - [x] Update test to validate error message structure
+- [x] Add SSL certificate bypass for self-signed Elasticsearch/OpenSearch certificates
 
 ## v3.0 — Real-Time Wazuh Alert Feed Widget
 - [x] Create wazuh_settings table to store Wazuh API and Elasticsearch configuration
