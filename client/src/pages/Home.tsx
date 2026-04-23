@@ -2,6 +2,7 @@ import { useAuth } from "@/_core/hooks/useAuth";
 import { trpc } from "@/lib/trpc";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { WazuhAlertFeed } from "@/components/WazuhAlertFeed";
 import {
   Activity, AlertTriangle, Brain, CheckCircle2, Clock, HardDrive,
   RefreshCw, Shield, TrendingUp, Users, Zap, XCircle
@@ -135,6 +136,9 @@ export default function Home() {
           </CardContent>
         </Card>
       </div>
+
+      {/* Wazuh Alert Feed */}
+      <WazuhAlertFeed />
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
         {/* Component Health Grid */}

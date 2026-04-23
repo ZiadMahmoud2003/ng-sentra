@@ -224,8 +224,8 @@
 - [x] Add tRPC procedures to fetch recent alerts from Wazuh/Elasticsearch (wazuh.getSettings, updateSettings, getAlerts, testConnection)
 - [x] Create WazuhAlertFeed widget component with real-time updates (5-second refresh)
 - [x] Display last 50 alerts with severity, timestamp, rule, and description
+- [x] Add Wazuh configuration management UI in System Settings (WazuhSettings component)
+- [x] Integrate WazuhAlertFeed widget into Dashboard home page
 - [x] All 22 tests pass
-- [ ] Add Wazuh configuration management UI in System Settings
-- [ ] Integrate WazuhAlertFeed widget into Dashboard home page
 - [ ] Test real-time alert updates with actual Wazuh instance
 - [ ] Save checkpoint v3.0

@@ -4,6 +4,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { SSHCredentialsSettings } from "@/components/SSHCredentialsSettings";
+import { WazuhSettings } from "@/components/WazuhSettings";
 import { toast } from "sonner";
 import { useState, useEffect } from "react";
 import { Settings, Save, Eye, EyeOff, Globe, Server, Key, Mail, Network } from "lucide-react";
@@ -135,6 +136,9 @@ export default function AdminSettings() {
 
       {/* SSH Credentials Management */}
       <SSHCredentialsSettings />
+
+      {/* Wazuh Configuration */}
+      <WazuhSettings />
 
       {/* Setting Groups */}
       {groups.map(group => (
