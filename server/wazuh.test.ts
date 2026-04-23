@@ -6,16 +6,18 @@ describe("Wazuh Elasticsearch Connection", () => {
     "should test connection to Wazuh Elasticsearch",
     async () => {
       // This test validates that the Wazuh credentials are correctly configured
-      // and that the Elasticsearch endpoint is reachable
       const result = await testWazuhConnection();
 
-      // The connection should succeed if credentials are valid
-      expect(typeof result).toBe("boolean");
+      // Result should be an object with success and message
+      expect(result).toHaveProperty("success");
+      expect(result).toHaveProperty("message");
+      expect(typeof result.success).toBe("boolean");
+      expect(typeof result.message).toBe("string");
 
-      if (result) {
-        console.log("[Wazuh] Connection test passed - Elasticsearch is reachable");
+      if (result.success) {
+        console.log("[Wazuh] Connection test passed:", result.message);
       } else {
-        console.log("[Wazuh] Connection test failed - Check Elasticsearch URL and credentials");
+        console.log("[Wazuh] Connection test failed:", result.message);
       }
     },
     { timeout: 15000 }

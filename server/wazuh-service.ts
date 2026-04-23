@@ -81,15 +81,17 @@ export async function fetchWazuhAlerts(limit: number = 50): Promise<WazuhAlert[]
 }
 
 /**
- * Test Wazuh Elasticsearch connection
+ * Test Wazuh Elasticsearch connection with detailed diagnostics
  */
-export async function testWazuhConnection(): Promise<boolean> {
+export async function testWazuhConnection(): Promise<{ success: boolean; message: string }> {
   try {
     const settings = await getWazuhSettings();
     
     if (!settings?.elasticsearchUrl) {
-      return false;
+      return { success: false, message: "Elasticsearch URL not configured" };
     }
+
+    console.log("[Wazuh] Testing connection to:", settings.elasticsearchUrl);
 
     const url = new URL("/_cluster/health", settings.elasticsearchUrl);
     
@@ -100,16 +102,47 @@ export async function testWazuhConnection(): Promise<boolean> {
         `${settings.elasticsearchUsername}:${settings.elasticsearchPassword}`
       ).toString("base64");
       headers["Authorization"] = `Basic ${auth}`;
+      console.log("[Wazuh] Using authentication with username:", settings.elasticsearchUsername);
+    } else {
+      console.log("[Wazuh] No authentication configured");
     }
 
+    console.log("[Wazuh] Sending request to:", url.toString());
+    
     const response = await fetch(url.toString(), {
       method: "GET",
       headers,
     });
 
-    return response.ok;
-  } catch (error) {
+    console.log("[Wazuh] Response status:", response.status, response.statusText);
+
+    if (response.ok) {
+      const data = await response.json() as any;
+      const message = `Connected successfully. Cluster status: ${data.status}`;
+      console.log("[Wazuh]", message);
+      return { success: true, message };
+    } else {
+      const errorText = await response.text();
+      const message = `HTTP ${response.status}: ${errorText.substring(0, 100)}`;
+      console.error("[Wazuh] Connection failed:", message);
+      return { success: false, message };
+    }
+  } catch (error: any) {
     console.error("[Wazuh] Connection test failed:", error);
-    return false;
+    
+    // Provide helpful error messages based on error type
+    let message = "Unknown error";
+    
+    if (error?.cause?.code === 'UND_ERR_CONNECT_TIMEOUT') {
+      message = "Connection timeout: Elasticsearch is not reachable. Check if the URL is correct and accessible from your network.";
+    } else if (error?.code === 'ECONNREFUSED') {
+      message = "Connection refused: Elasticsearch is not running or the port is incorrect.";
+    } else if (error?.code === 'ENOTFOUND') {
+      message = "DNS error: Cannot resolve the Elasticsearch hostname.";
+    } else if (error?.message) {
+      message = `Error: ${error.message}`;
+    }
+    
+    return { success: false, message };
   }
 }

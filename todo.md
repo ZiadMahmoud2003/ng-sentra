@@ -220,8 +220,11 @@
 
 ## v3.0 — Real-Time Wazuh Alert Feed Widget (COMPLETE)
 
-### v3.0.1 — Bug Fixes
+### v3.0.1 — Bug Fixes & Debugging
 - [x] Fix Wazuh test connection button error in WazuhSettings component
+- [x] Add enhanced error messages to Wazuh connection diagnostics
+- [x] Improve logging for connection troubleshooting
+- [x] Update test to validate error message structure
 
 ## v3.0 — Real-Time Wazuh Alert Feed Widget
 - [x] Create wazuh_settings table to store Wazuh API and Elasticsearch configuration

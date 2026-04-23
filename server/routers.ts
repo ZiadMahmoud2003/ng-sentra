@@ -353,15 +353,23 @@ export const appRouter = router({
         }
       }),
 
+
     testConnection: adminProcedure.query(async () => {
       try {
         const { testWazuhConnection } = await import("./wazuh-service");
-        const connected = await testWazuhConnection();
-        return { success: connected, message: connected ? "Wazuh connection successful" : "Wazuh connection failed" };
+        return await testWazuhConnection();
       } catch (error: any) {
-        return { success: false, message: error.message };
+        return { success: false, message: `Unexpected error: ${error.message}` };
       }
     }),
+
+
+
+
+
+
+
+
   }),
 });
 
