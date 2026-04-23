@@ -217,3 +217,15 @@
 - [x] Add Copy button to manually copy SSH command
 - [x] All 22 tests pass
 - [x] Save checkpoint v2.2
+
+## v3.0 — Real-Time Wazuh Alert Feed Widget
+- [x] Create wazuh_settings table to store Wazuh API and Elasticsearch configuration
+- [x] Create Wazuh Elasticsearch query service in server (fetchWazuhAlerts, testWazuhConnection)
+- [x] Add tRPC procedures to fetch recent alerts from Wazuh/Elasticsearch (wazuh.getSettings, updateSettings, getAlerts, testConnection)
+- [x] Create WazuhAlertFeed widget component with real-time updates (5-second refresh)
+- [x] Display last 50 alerts with severity, timestamp, rule, and description
+- [x] All 22 tests pass
+- [ ] Add Wazuh configuration management UI in System Settings
+- [ ] Integrate WazuhAlertFeed widget into Dashboard home page
+- [ ] Test real-time alert updates with actual Wazuh instance
+- [ ] Save checkpoint v3.0

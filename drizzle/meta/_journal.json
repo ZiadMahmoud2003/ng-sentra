@@ -36,6 +36,13 @@
       "when": 1776813678276,
       "tag": "0004_lyrical_terrax",
       "breakpoints": true
+    },
+    {
+      "idx": 5,
+      "version": "5",
+      "when": 1776966157282,
+      "tag": "0005_chubby_microbe",
+      "breakpoints": true
     }
   ]
 }

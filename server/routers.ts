@@ -9,6 +9,7 @@ import {
   getAllSettings, getAllUsers, getAuditLogs, getRecentAuditLogs, triggerSoarApproach,
   updateAiModel, updateComponent, updateSoarApproach, updateUserRole, upsertSetting,
   getSshCredentialsByComponentId, getAllSshCredentials, upsertSshCredential, deleteSshCredential,
+  getWazuhSettings, upsertWazuhSettings,
 } from "./db";
 
 // ─── RBAC helpers ────────────────────────────────────────────────────────────
@@ -313,6 +314,53 @@ export const appRouter = router({
           await logAction(ctx, "DELETE_SSH_CREDENTIAL", `component:${input.componentId}`);
           return { success: true };
         }),
+    }),
+  }),
+
+  wazuh: router({
+    getSettings: adminProcedure.query(async () => {
+      return getWazuhSettings();
+    }),
+
+    updateSettings: adminProcedure
+      .input(z.object({
+        apiUrl: z.string().optional(),
+        apiUsername: z.string().optional(),
+        apiPassword: z.string().optional(),
+        elasticsearchUrl: z.string().optional(),
+        elasticsearchUsername: z.string().optional(),
+        elasticsearchPassword: z.string().optional(),
+        alertIndexPattern: z.string().optional(),
+        refreshInterval: z.number().optional(),
+        alertLimit: z.number().optional(),
+        enabled: z.boolean().optional(),
+      }))
+      .mutation(async ({ ctx, input }) => {
+        await upsertWazuhSettings(input);
+        await logAction(ctx, "UPDATE_WAZUH_SETTINGS", "wazuh:config");
+        return { success: true };
+      }),
+
+    getAlerts: protectedProcedure
+      .input(z.object({ limit: z.number().default(50) }))
+      .query(async ({ input }) => {
+        try {
+          const { fetchWazuhAlerts } = await import("./wazuh-service");
+          const alerts = await fetchWazuhAlerts(input.limit);
+          return { success: true, alerts };
+        } catch (error: any) {
+          return { success: false, error: error.message, alerts: [] };
+        }
+      }),
+
+    testConnection: adminProcedure.query(async () => {
+      try {
+        const { testWazuhConnection } = await import("./wazuh-service");
+        const connected = await testWazuhConnection();
+        return { success: connected, message: connected ? "Wazuh connection successful" : "Wazuh connection failed" };
+      } catch (error: any) {
+        return { success: false, message: error.message };
+      }
     }),
   }),
 });

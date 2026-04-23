@@ -103,6 +103,26 @@ export const sshCredentials = mysqlTable("ssh_credentials", {
 export type SshCredential = typeof sshCredentials.$inferSelect;
 export type InsertSshCredential = typeof sshCredentials.$inferInsert;
 
+// Wazuh configuration table
+export const wazuhSettings = mysqlTable("wazuh_settings", {
+  id: int("id").autoincrement().primaryKey(),
+  apiUrl: varchar("apiUrl", { length: 512 }),
+  apiUsername: varchar("apiUsername", { length: 128 }),
+  apiPassword: text("apiPassword"), // Encrypted in production
+  elasticsearchUrl: varchar("elasticsearchUrl", { length: 512 }),
+  elasticsearchUsername: varchar("elasticsearchUsername", { length: 128 }),
+  elasticsearchPassword: text("elasticsearchPassword"), // Encrypted in production
+  alertIndexPattern: varchar("alertIndexPattern", { length: 256 }).default("wazuh-alerts-*"),
+  refreshInterval: int("refreshInterval").default(5000), // milliseconds
+  alertLimit: int("alertLimit").default(50),
+  enabled: boolean("enabled").default(true).notNull(),
+  createdAt: timestamp("createdAt").defaultNow().notNull(),
+  updatedAt: timestamp("updatedAt").defaultNow().onUpdateNow().notNull(),
+});
+
+export type WazuhSetting = typeof wazuhSettings.$inferSelect;
+export type InsertWazuhSetting = typeof wazuhSettings.$inferInsert;
+
 // System settings table — key/value store for global configurable settings
 export const systemSettings = mysqlTable("system_settings", {
   id: int("id").autoincrement().primaryKey(),

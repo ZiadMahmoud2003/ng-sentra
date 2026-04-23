@@ -1,6 +1,6 @@
 import { and, desc, eq, gte, like, lte, sql } from "drizzle-orm";
 import { drizzle } from "drizzle-orm/mysql2";
-import { AiModel, AuditLog, Component, InsertAiModel, InsertAuditLog, InsertComponent, InsertSoarApproach, InsertUser, SoarApproach, SystemSetting, User, SshCredential, InsertSshCredential, aiModels, auditLogs, components, soarApproaches, systemSettings, users, sshCredentials } from "../drizzle/schema";
+import { AiModel, AuditLog, Component, InsertAiModel, InsertAuditLog, InsertComponent, InsertSoarApproach, InsertUser, SoarApproach, SystemSetting, User, SshCredential, InsertSshCredential, WazuhSetting, InsertWazuhSetting, aiModels, auditLogs, components, soarApproaches, systemSettings, users, sshCredentials, wazuhSettings } from "../drizzle/schema";
 import { ENV } from './_core/env';
 
 let _db: ReturnType<typeof drizzle> | null = null;
@@ -245,4 +245,25 @@ export async function deleteSshCredential(componentId: number): Promise<void> {
   const db = await getDb();
   if (!db) return;
   await db.delete(sshCredentials).where(eq(sshCredentials.componentId, componentId));
+}
+
+// ─── Wazuh Settings ──────────────────────────────────────────────────────────
+
+export async function getWazuhSettings(): Promise<WazuhSetting | undefined> {
+  const db = await getDb();
+  if (!db) return undefined;
+  const result = await db.select().from(wazuhSettings).limit(1);
+  return result.length > 0 ? result[0] : undefined;
+}
+
+export async function upsertWazuhSettings(data: Partial<InsertWazuhSetting>): Promise<void> {
+  const db = await getDb();
+  if (!db) return;
+  
+  const existing = await getWazuhSettings();
+  if (existing) {
+    await db.update(wazuhSettings).set({ ...data, updatedAt: new Date() }).where(eq(wazuhSettings.id, existing.id));
+  } else {
+    await db.insert(wazuhSettings).values({ ...data, createdAt: new Date(), updatedAt: new Date() } as InsertWazuhSetting);
+  }
 }
