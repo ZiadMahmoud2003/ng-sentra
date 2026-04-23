@@ -3,7 +3,7 @@ import { Server } from "http";
 import { nanoid } from "nanoid";
 import { createTerminalSession, sendTerminalInput, closeTerminalSession } from "../terminal-service";
 import { sdk } from "./sdk";
-import { getSSHConfig } from "../ssh-service";
+
 
 /**
  * Setup WebSocket terminal handler
@@ -38,7 +38,7 @@ export function setupTerminalHandler(httpServer: Server) {
       }
 
       wss.handleUpgrade(request, socket, head, (ws) => {
-        handleTerminalConnection(ws, user);
+        handleTerminalConnection(ws, user, sdk);
       });
     } catch (error) {
       console.error("[Terminal] Authentication failed:", error);
@@ -51,7 +51,7 @@ export function setupTerminalHandler(httpServer: Server) {
 /**
  * Handle individual terminal WebSocket connection
  */
-function handleTerminalConnection(ws: any, user: any): void {
+function handleTerminalConnection(ws: any, user: any, sdk: any): void {
   const sessionId = nanoid();
   let sshSessionId: string | null = null;
 
@@ -63,15 +63,24 @@ function handleTerminalConnection(ws: any, user: any): void {
 
       if (data.type === "init") {
         // Initialize SSH connection
-        const { componentSlug, filePath } = data;
+        const { componentId, filePath } = data;
 
-        // Get SSH credentials from backend (NOT from client)
-        const sshConfig = await getSSHConfig();
+        // Get SSH credentials for this specific component
+        let sshConfig: any = null;
+        if (componentId) {
+          try {
+            const result = await sdk.call("ssh.credentials.getByComponent", { componentId });
+            sshConfig = result;
+          } catch (error) {
+            console.error("[Terminal] Failed to fetch component SSH credentials:", error);
+          }
+        }
+
         if (!sshConfig) {
           ws.send(
             JSON.stringify({
               type: "error",
-              message: "SSH credentials not configured on server",
+              message: "SSH credentials not configured for this component",
             })
           );
           ws.close();
@@ -96,7 +105,7 @@ function handleTerminalConnection(ws: any, user: any): void {
         const session = await createTerminalSession(
           sessionId,
           sshConfig.host,
-          sshConfig.user,
+          sshConfig.username,
           sshConfig.password
         );
 

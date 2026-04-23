@@ -199,3 +199,10 @@
 - [x] Add OpenSSHButton to Components grid page
 - [x] Add SSHCredentialsSettings to System Settings admin panel
 - [x] Save checkpoint v2.0
+
+## v2.1 — Embedded Web-Based Terminal with SSH
+- [x] Create backend WebSocket SSH tunnel service for terminal I/O (updated terminalHandler to use component-specific SSH credentials)
+- [x] Create BrowserSSHTerminal component with xterm.js for embedded terminal
+- [x] Update OpenSSHButton to open embedded terminal modal instead of copying command
+- [x] All 22 tests pass
+- [x] Save checkpoint v2.1
