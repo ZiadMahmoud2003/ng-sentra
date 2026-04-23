@@ -47,35 +47,35 @@ export function OpenSSHButton({
     const isMac = navigator.platform.includes("Mac");
     
     if (isWindows) {
-      // Windows: Use SSH with key file (password field contains key path)
-      // Format: ssh -i "C:\Users\ZIAD\.ssh\id_rsa" -p 2222 ziad@192.168.1.14
-      const keyPath = password; // In this case, password field stores the key path
-      const sshCommand = `ssh -i "${keyPath}" -p ${port} ${username}@${host}`;
+      // Windows: Launch PuTTY with saved session
+      // The session name should match the component name (e.g., "snort", "filebeat", etc.)
+      const sessionName = componentName.toLowerCase();
       
-      // Create PowerShell script that opens terminal and runs SSH
-      const psScript = `
-Start-Process powershell -ArgumentList "-NoExit", "-Command", "${sshCommand.replace(/"/g, '\\"')}"
-`.trim();
+      // Create a batch script that launches PuTTY
+      const batchScript = `@echo off
+start putty -load "${sessionName}"
+exit
+`;
 
       // Create blob and download script
-      const blob = new Blob([psScript], { type: "text/plain" });
+      const blob = new Blob([batchScript], { type: "text/plain" });
       const url = URL.createObjectURL(blob);
       const link = document.createElement("a");
       link.href = url;
-      link.download = `ssh-${componentName.toLowerCase()}.ps1`;
+      link.download = `launch-${sessionName}.bat`;
       document.body.appendChild(link);
       link.click();
       document.body.removeChild(link);
       URL.revokeObjectURL(url);
 
       toast.info(
-        `PowerShell script downloaded. Run it to connect to ${componentName}. ` +
-        `It will automatically open SSH with your key.`
+        `Batch script downloaded. Run it to launch PuTTY session for ${componentName}. ` +
+        `Make sure you have created a PuTTY session named "${sessionName}".`
       );
     } else if (isMac) {
-      // macOS: Use osascript to open Terminal with SSH
-      const keyPath = password;
-      const sshCommand = `ssh -i "${keyPath}" -p ${port} ${username}@${host}`;
+      // macOS: Use osascript to launch PuTTY or SSH
+      const sessionName = componentName.toLowerCase();
+      const sshCommand = `ssh -p ${port} ${username}@${host}`;
       
       const osascript = `tell application "Terminal"
         activate
@@ -86,20 +86,18 @@ Start-Process powershell -ArgumentList "-NoExit", "-Command", "${sshCommand.repl
       const url = URL.createObjectURL(blob);
       const link = document.createElement("a");
       link.href = url;
-      link.download = `ssh-${componentName.toLowerCase()}.scpt`;
+      link.download = `launch-${sessionName}.scpt`;
       document.body.appendChild(link);
       link.click();
       document.body.removeChild(link);
       URL.revokeObjectURL(url);
 
       toast.info(
-        `AppleScript downloaded. Run it to connect to ${componentName}. ` +
-        `It will automatically open SSH with your key.`
+        `AppleScript downloaded. Run it to connect to ${componentName}.`
       );
     } else {
       // Linux: Copy command to clipboard
-      const keyPath = password;
-      const command = `ssh -i "${keyPath}" -p ${port} ${username}@${host}`;
+      const command = `ssh -p ${port} ${username}@${host}`;
       navigator.clipboard.writeText(command);
       toast.success(
         `SSH command copied! Paste in your terminal to connect to ${componentName}.`
