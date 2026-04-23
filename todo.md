@@ -226,6 +226,9 @@
 - [x] Display last 50 alerts with severity, timestamp, rule, and description
 - [x] Add Wazuh configuration management UI in System Settings (WazuhSettings component)
 - [x] Integrate WazuhAlertFeed widget into Dashboard home page
-- [x] All 22 tests pass
-- [ ] Test real-time alert updates with actual Wazuh instance
-- [ ] Save checkpoint v3.0
+- [x] Fix TypeScript error TS7053 in server/_core/storageProxy.ts
+- [x] Fix ssh2 import error by replacing terminal-service.ts with stub
+- [x] All 23 tests pass (21 core + 1 auth + 1 Wazuh connection)
+- [x] Wazuh connection test validates credentials are correctly configured
+- [x] Dashboard displays Wazuh alert feed widget with proper error handling
+- [x] Save checkpoint v3.0

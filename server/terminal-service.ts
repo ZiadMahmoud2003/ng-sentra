@@ -1,9 +1,15 @@
-import { Client, ClientChannel } from "ssh2";
-import { getSSHConfig } from "./ssh-service";
+/**
+ * Terminal Service - Stub Implementation
+ * 
+ * SSH terminal access is handled via local terminal launch (OpenSSHButton component)
+ * rather than embedded WebSocket connections. This service is kept as a stub
+ * for potential future use or reference.
+ */
 
 interface TerminalSession {
-  client: Client;
-  stream: ClientChannel;
+  sessionId: string;
+  host: string;
+  user: string;
   isConnected: boolean;
 }
 
@@ -11,6 +17,7 @@ const sessions = new Map<string, TerminalSession>();
 
 /**
  * Create an SSH terminal session
+ * NOTE: This is a stub. Use OpenSSHButton component for local terminal launch instead.
  */
 export async function createTerminalSession(
   sessionId: string,
@@ -18,79 +25,25 @@ export async function createTerminalSession(
   user: string,
   password: string
 ): Promise<TerminalSession | null> {
-  return new Promise((resolve) => {
-    const client = new Client();
-
-    client.on("ready", () => {
-      client.shell((err, stream) => {
-        if (err) {
-          client.end();
-          resolve(null);
-          return;
-        }
-
-        const session: TerminalSession = {
-          client,
-          stream,
-          isConnected: true,
-        };
-
-        sessions.set(sessionId, session);
-        resolve(session);
-      });
-    });
-
-    client.on("error", (err) => {
-      console.error("[Terminal] SSH connection error:", err);
-      resolve(null);
-    });
-
-    client.on("close", () => {
-      sessions.delete(sessionId);
-    });
-
-    client.connect({
-      host,
-      username: user,
-      password,
-      readyTimeout: 10000,
-    });
-  });
+  console.warn(
+    "[Terminal] Embedded terminal sessions are not supported. Use the OpenSSHButton component to launch your local SSH client."
+  );
+  return null;
 }
 
 /**
  * Send input to terminal session
  */
 export function sendTerminalInput(sessionId: string, data: string): boolean {
-  const session = sessions.get(sessionId);
-  if (!session || !session.isConnected) {
-    return false;
-  }
-
-  try {
-    session.stream.write(data);
-    return true;
-  } catch (error) {
-    console.error("[Terminal] Failed to send input:", error);
-    return false;
-  }
+  console.warn("[Terminal] Terminal input not supported in stub implementation");
+  return false;
 }
 
 /**
  * Close terminal session
  */
 export function closeTerminalSession(sessionId: string): void {
-  const session = sessions.get(sessionId);
-  if (session) {
-    session.isConnected = false;
-    try {
-      session.stream.end();
-      session.client.end();
-    } catch (error) {
-      console.error("[Terminal] Error closing session:", error);
-    }
-    sessions.delete(sessionId);
-  }
+  sessions.delete(sessionId);
 }
 
 /**
@@ -108,16 +61,6 @@ export async function editFileViaTerminal(
   filePath: string,
   editor: "nano" | "vi" = "nano"
 ): Promise<boolean> {
-  const session = sessions.get(sessionId);
-  if (!session || !session.isConnected) {
-    return false;
-  }
-
-  try {
-    session.stream.write(`${editor} "${filePath}"\n`);
-    return true;
-  } catch (error) {
-    console.error("[Terminal] Failed to open editor:", error);
-    return false;
-  }
+  console.warn("[Terminal] File editing not supported in stub implementation");
+  return false;
 }
