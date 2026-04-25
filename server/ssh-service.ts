@@ -5,6 +5,7 @@ import { systemSettings } from "../drizzle/schema";
 
 interface SSHConfig {
   host: string;
+  port: number;
   user: string;
   password: string;
 }
@@ -20,7 +21,7 @@ export async function getSSHConfig(): Promise<SSHConfig | null> {
     const result = await db
       .select()
       .from(systemSettings)
-      .where(inArray(systemSettings.key, ["ssh_host", "ssh_user", "ssh_password"]));
+      .where(inArray(systemSettings.key, ["ssh_host", "ssh_port", "ssh_user", "ssh_password"]));
     const settings = result;
 
     const map: Record<string, string> = {};
@@ -32,6 +33,7 @@ export async function getSSHConfig(): Promise<SSHConfig | null> {
 
     return {
       host: map.ssh_host,
+      port: parseInt(map.ssh_port, 10) || 22,
       user: map.ssh_user,
       password: map.ssh_password,
     };
@@ -84,6 +86,7 @@ export async function readFileViaSsh(filePath: string): Promise<string | null> {
 
     conn.connect({
       host: sshConfig.host,
+      port: sshConfig.port,
       username: sshConfig.user,
       password: sshConfig.password,
       readyTimeout: 10000,
@@ -132,6 +135,7 @@ export async function writeFileViaSsh(filePath: string, content: string): Promis
 
     conn.connect({
       host: sshConfig.host,
+      port: sshConfig.port,
       username: sshConfig.user,
       password: sshConfig.password,
       readyTimeout: 10000,
@@ -168,6 +172,7 @@ export async function testSSHConnection(): Promise<boolean> {
 
     conn.connect({
       host: sshConfig.host,
+      port: sshConfig.port,
       username: sshConfig.user,
       password: sshConfig.password,
       readyTimeout: 5000,

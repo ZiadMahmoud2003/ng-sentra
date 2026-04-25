@@ -4,9 +4,16 @@ import { Card, CardContent } from "@/components/ui/card";
 import { OpenSSHButton } from "@/components/OpenSSHButton";
 import {
   AlertTriangle, Bug, Eye, FileText, Globe,
-  Lock, Search, Shield, Terminal, Zap, Settings, Server
+  Lock, Search, Shield, Terminal, Zap, Settings, Server, Edit
 } from "lucide-react";
 import { useLocation } from "wouter";
+import { useState } from "react";
+import { toast } from "sonner";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Textarea } from "@/components/ui/textarea";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from "@/components/ui/dialog";
 
 const iconMap: Record<string, any> = {
   Shield, Eye, Lock, Bug, FileText, Zap, Search,
@@ -58,10 +65,43 @@ const categoryColors: Record<string, string> = {
 export default function ComponentsGrid() {
   const { user } = useAuth();
   const [, navigate] = useLocation();
-  const { data: components, isLoading } = trpc.components.list.useQuery();
+  const { data: components, isLoading, refetch } = trpc.components.list.useQuery();
 
   const isAdmin = user?.role === "Admin" || user?.role === "admin";
   const isViewer = user?.role === "Viewer" || user?.role === "user";
+
+  // ── Edit config state ──
+  const [editingComponent, setEditingComponent] = useState<any>(null);
+  const [editForm, setEditForm] = useState({ url: "", port: "", description: "" });
+
+  const updateComponentMutation = trpc.components.update.useMutation({
+    onSuccess: () => {
+      toast.success("Component configuration updated");
+      setEditingComponent(null);
+      refetch();
+    },
+    onError: (e) => toast.error(`Update failed: ${e.message}`)
+  });
+
+  const handleEditClick = (e: React.MouseEvent, comp: any) => {
+    e.stopPropagation(); // prevent clicking the card
+    setEditingComponent(comp);
+    setEditForm({
+      url: comp.url || "",
+      port: comp.port ? String(comp.port) : "",
+      description: comp.description || "",
+    });
+  };
+
+  const submitEdit = () => {
+    if (!editingComponent) return;
+    updateComponentMutation.mutate({
+      id: editingComponent.id,
+      url: editForm.url || undefined,
+      port: editForm.port ? parseInt(editForm.port, 10) : null,
+      description: editForm.description || undefined
+    });
+  };
 
   // Server already filters by role — use directly
   const visibleComponents = components ?? [];
@@ -154,9 +194,20 @@ export default function ComponentsGrid() {
                   </div>
 
                   {/* Name + category */}
-                  <div>
-                    <h3 className="font-semibold text-foreground text-sm leading-tight">{comp.name}</h3>
-                    <p className={`text-[10px] font-mono mt-0.5 ${catColor}`}>{comp.category}</p>
+                  <div className="flex items-start justify-between">
+                    <div>
+                      <h3 className="font-semibold text-foreground text-sm leading-tight">{comp.name}</h3>
+                      <p className={`text-[10px] font-mono mt-0.5 ${catColor}`}>{comp.category}</p>
+                    </div>
+                    {isAdmin && (
+                      <button 
+                        onClick={(e) => handleEditClick(e, comp)} 
+                        className="text-muted-foreground hover:text-primary transition-colors p-1"
+                        title="Edit Configuration"
+                      >
+                        <Edit className="w-3.5 h-3.5" />
+                      </button>
+                    )}
                   </div>
 
                   {/* Description */}
@@ -212,6 +263,56 @@ export default function ComponentsGrid() {
           </p>
         </div>
       )}
+
+      {/* ═══════════ EDIT CONFIGURATION DIALOG ═══════════ */}
+      <Dialog open={!!editingComponent} onOpenChange={(open) => !open && setEditingComponent(null)}>
+        <DialogContent className="sm:max-w-[425px] bg-card border-border">
+          <DialogHeader>
+            <DialogTitle className="text-foreground">Edit Component Config</DialogTitle>
+            <DialogDescription className="text-muted-foreground">
+              Update dynamic connection settings for <span className="font-mono text-primary">{editingComponent?.name}</span>.
+            </DialogDescription>
+          </DialogHeader>
+          <div className="grid gap-4 py-4">
+            <div className="space-y-2">
+              <Label htmlFor="url" className="text-xs font-mono uppercase tracking-wider text-muted-foreground">Web URL</Label>
+              <Input
+                id="url"
+                value={editForm.url}
+                onChange={(e) => setEditForm(f => ({ ...f, url: e.target.value }))}
+                placeholder="https://192.168.x.x"
+                className="bg-background/50 border-border font-mono text-sm"
+              />
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="port" className="text-xs font-mono uppercase tracking-wider text-muted-foreground">Port (Optional)</Label>
+              <Input
+                id="port"
+                type="number"
+                value={editForm.port}
+                onChange={(e) => setEditForm(f => ({ ...f, port: e.target.value }))}
+                placeholder="e.g. 5601"
+                className="bg-background/50 border-border font-mono text-sm"
+              />
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="desc" className="text-xs font-mono uppercase tracking-wider text-muted-foreground">Description</Label>
+              <Textarea
+                id="desc"
+                value={editForm.description}
+                onChange={(e) => setEditForm(f => ({ ...f, description: e.target.value }))}
+                className="bg-background/50 border-border text-sm min-h-[80px]"
+              />
+            </div>
+          </div>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setEditingComponent(null)}>Cancel</Button>
+            <Button onClick={submitEdit} disabled={updateComponentMutation.isPending} className="bg-primary hover:bg-primary/90 text-primary-foreground">
+              {updateComponentMutation.isPending ? "Saving..." : "Save Configuration"}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }

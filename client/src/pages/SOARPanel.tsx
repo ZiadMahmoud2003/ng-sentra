@@ -9,8 +9,11 @@ import { useAuth } from "@/_core/hooks/useAuth";
 import {
   Activity, AlertTriangle, Clock, FileText, Globe, Play,
   Shield, Zap, Link, Terminal, CalendarClock, Webhook,
-  Brain, Mail, Eye, Pencil, Save, X
+  Brain, Mail, Eye, Pencil, Save, X, Edit
 } from "lucide-react";
+import { Label } from "@/components/ui/label";
+import { Textarea } from "@/components/ui/textarea";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from "@/components/ui/dialog";
 
 const approachIcons: Record<string, any> = {
   ip: Shield,
@@ -88,23 +91,34 @@ export default function SOARPanel() {
   const isAnalystOrAdmin = ["Admin", "admin", "Analyst"].includes(user?.role ?? "");
   const isAdmin = user?.role === "Admin" || user?.role === "admin";
 
-  // Behavior webhook IP — editable by Admin
-  const behaviorApproach = (approaches ?? []).find(a => a.slug === "behavior");
-  const [editingBehaviorIp, setEditingBehaviorIp] = useState(false);
-  const [behaviorWebhookUrl, setBehaviorWebhookUrl] = useState("");
+  // Edit config state
+  const [editingApproach, setEditingApproach] = useState<any>(null);
+  const [editForm, setEditForm] = useState({ webhookUrl: "", description: "" });
 
   const updateSoarMutation = trpc.soar.update.useMutation({
     onSuccess: () => {
-      toast.success("Behavior webhook URL updated");
-      setEditingBehaviorIp(false);
+      toast.success("IR Approach configuration updated");
+      setEditingApproach(null);
       refetch();
     },
     onError: (e) => toast.error(`Update failed: ${e.message}`),
   });
 
-  const saveBehaviorWebhook = () => {
-    if (!behaviorApproach) return;
-    updateSoarMutation.mutate({ id: behaviorApproach.id, webhookUrl: behaviorWebhookUrl || undefined });
+  const handleEditClick = (approach: any) => {
+    setEditingApproach(approach);
+    setEditForm({
+      webhookUrl: approach.webhookUrl || "",
+      description: approach.description || "",
+    });
+  };
+
+  const submitEdit = () => {
+    if (!editingApproach) return;
+    updateSoarMutation.mutate({
+      id: editingApproach.id,
+      webhookUrl: editForm.webhookUrl || undefined,
+      description: editForm.description || undefined
+    });
   };
 
   const totalTriggers = (approaches ?? []).reduce((sum, a) => sum + (a.triggerCount ?? 0), 0);
@@ -124,43 +138,6 @@ export default function SOARPanel() {
             Incident Response automation — 5 workflows running on n8n at{" "}
             <code className="text-primary/80 font-mono text-xs">{n8nBaseUrl}</code>
           </p>
-          {/* Behavior webhook IP config for Admin */}
-          {isAdmin && behaviorApproach && (
-            <div className="mt-3 p-3 bg-purple-500/5 border border-purple-500/20 rounded-lg">
-              <p className="text-[10px] font-mono text-purple-400 uppercase tracking-wider mb-2 flex items-center gap-1">
-                <Webhook className="w-3 h-3" /> Behavior IR — Configurable Webhook URL
-              </p>
-              {editingBehaviorIp ? (
-                <div className="flex items-center gap-2">
-                  <Input
-                    value={behaviorWebhookUrl}
-                    onChange={e => setBehaviorWebhookUrl(e.target.value)}
-                    placeholder={`${n8nBaseUrl}/webhook/behavior`}
-                    className="h-7 text-xs font-mono flex-1"
-                  />
-                  <Button size="sm" className="h-7 px-2" onClick={saveBehaviorWebhook} disabled={updateSoarMutation.isPending}>
-                    <Save className="w-3 h-3" />
-                  </Button>
-                  <Button size="sm" variant="outline" className="h-7 px-2" onClick={() => setEditingBehaviorIp(false)}>
-                    <X className="w-3 h-3" />
-                  </Button>
-                </div>
-              ) : (
-                <div className="flex items-center gap-2">
-                  <code className="text-[10px] font-mono text-muted-foreground flex-1">
-                    {behaviorApproach.webhookUrl ?? "Not configured — schedule-only"}
-                  </code>
-                  <Button
-                    size="sm" variant="outline"
-                    className="h-6 px-2 text-[10px] font-mono border-purple-500/30 text-purple-400 hover:bg-purple-500/10"
-                    onClick={() => { setBehaviorWebhookUrl(behaviorApproach.webhookUrl ?? ""); setEditingBehaviorIp(true); }}
-                  >
-                    <Pencil className="w-3 h-3 mr-1" /> Edit
-                  </Button>
-                </div>
-              )}
-            </div>
-          )}
         </div>
       </div>
 
@@ -214,6 +191,11 @@ export default function SOARPanel() {
                         <span className={`text-[10px] font-mono px-1.5 py-0.5 rounded border ${colors.badge}`}>
                           {meta.triggerType === "webhook" ? "WEBHOOK" : meta.triggerType === "schedule" ? "SCHEDULED" : "HYBRID"}
                         </span>
+                      )}
+                      {isAdmin && (
+                        <button onClick={() => handleEditClick(approach)} className="text-muted-foreground hover:text-primary transition-colors ml-auto">
+                          <Edit className="w-3.5 h-3.5" />
+                        </button>
                       )}
                     </div>
                   </div>
@@ -344,6 +326,48 @@ export default function SOARPanel() {
           );
         })}
       </div>
+
+      {/* ═══════════ EDIT CONFIGURATION DIALOG ═══════════ */}
+      <Dialog open={!!editingApproach} onOpenChange={(open) => !open && setEditingApproach(null)}>
+        <DialogContent className="sm:max-w-[425px] bg-card border-border">
+          <DialogHeader>
+            <DialogTitle className="text-foreground">Edit IR Approach Config</DialogTitle>
+            <DialogDescription className="text-muted-foreground">
+              Update webhook settings for <span className="font-mono text-primary">{editingApproach?.name}</span>.
+            </DialogDescription>
+          </DialogHeader>
+          <div className="grid gap-4 py-4">
+            <div className="space-y-2">
+              <Label htmlFor="webhook" className="text-xs font-mono uppercase tracking-wider text-muted-foreground">Webhook URL</Label>
+              <Input
+                id="webhook"
+                value={editForm.webhookUrl}
+                onChange={(e) => setEditForm(f => ({ ...f, webhookUrl: e.target.value }))}
+                placeholder={`${n8nBaseUrl}/webhook/...`}
+                className="bg-background/50 border-border font-mono text-sm"
+              />
+              <p className="text-[10px] text-muted-foreground">
+                The n8n webhook endpoint URL that this IR approach triggers. Leave empty for schedule-only approaches.
+              </p>
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="desc" className="text-xs font-mono uppercase tracking-wider text-muted-foreground">Description</Label>
+              <Textarea
+                id="desc"
+                value={editForm.description}
+                onChange={(e) => setEditForm(f => ({ ...f, description: e.target.value }))}
+                className="bg-background/50 border-border text-sm min-h-[80px]"
+              />
+            </div>
+          </div>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setEditingApproach(null)}>Cancel</Button>
+            <Button onClick={submitEdit} disabled={updateSoarMutation.isPending} className="bg-primary hover:bg-primary/90 text-primary-foreground">
+              {updateSoarMutation.isPending ? "Saving..." : "Save Configuration"}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }

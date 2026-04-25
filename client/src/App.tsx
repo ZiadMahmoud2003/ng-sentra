@@ -10,6 +10,7 @@ import ComponentsGrid from "./pages/ComponentsGrid";
 import ComponentViewer from "./pages/ComponentViewer";
 import SOARPanel from "./pages/SOARPanel";
 import AIModelsPanel from "./pages/AIModelsPanel";
+import AIThreatFeed from "./pages/AIThreatFeed";
 import AdminComponents from "./pages/AdminComponents";
 import AdminUsers from "./pages/AdminUsers";
 import AdminAudit from "./pages/AdminAudit";
@@ -29,6 +30,7 @@ function Router() {
       <Route path="/terminal/:slug" component={() => <SOCLayout><TerminalAccessPage /></SOCLayout>} />
       <Route path="/soar" component={() => <SOCLayout><SOARPanel /></SOCLayout>} />
       <Route path="/ai-models" component={() => <SOCLayout><AIModelsPanel /></SOCLayout>} />
+      <Route path="/ai-feed" component={() => <SOCLayout><AIThreatFeed /></SOCLayout>} />
       <Route path="/admin/components" component={() => <SOCLayout><AdminComponents /></SOCLayout>} />
       <Route path="/admin/users" component={() => <SOCLayout><AdminUsers /></SOCLayout>} />
       <Route path="/admin/audit" component={() => <SOCLayout><AdminAudit /></SOCLayout>} />

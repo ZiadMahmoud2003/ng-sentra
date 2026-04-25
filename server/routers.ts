@@ -11,6 +11,7 @@ import {
   getSshCredentialsByComponentId, getAllSshCredentials, upsertSshCredential, deleteSshCredential,
   getWazuhSettings, upsertWazuhSettings,
 } from "./db";
+import { checkAllModelsHealth, checkModelHealth } from "./ai-health-service";
 
 // ─── RBAC helpers ────────────────────────────────────────────────────────────
 const adminProcedure = protectedProcedure.use(({ ctx, next }) => {
@@ -232,6 +233,73 @@ export const appRouter = router({
         await updateAiModel(id, data);
         await logAction(ctx, "UPDATE_AI_MODEL", `ai:${id}`, JSON.stringify(data));
         return { success: true };
+      }),
+
+    // Probe ALL AI model endpoints and update their status in the DB
+    healthCheck: protectedProcedure.mutation(async ({ ctx }) => {
+      const models = await getAllAiModels();
+      if (!models.length) return { results: [], checkedAt: new Date() };
+
+      const results = await checkAllModelsHealth(
+        models.map(m => ({ id: m.id, slug: m.slug, endpointUrl: m.endpointUrl }))
+      );
+
+      // Persist results back to DB
+      for (const result of results) {
+        const model = models.find(m => m.slug === result.slug);
+        if (!model) continue;
+
+        await updateAiModel(model.id, {
+          status: result.status as any,
+          lastActive: result.lastActive ?? model.lastActive,
+          recentOutput: result.recentOutput ?? model.recentOutput,
+        });
+      }
+
+      await logAction(ctx, "AI_HEALTH_CHECK", "ai:all", `Checked ${results.length} models`);
+
+      return {
+        results: results.map(r => ({
+          slug: r.slug,
+          status: r.status,
+          lastActive: r.lastActive,
+          responseTimeMs: r.responseTimeMs,
+          recentOutput: r.recentOutput,
+          checkedVia: r.checkedVia,
+        })),
+        checkedAt: new Date(),
+      };
+    }),
+
+    // Probe a SINGLE AI model endpoint
+    healthCheckSingle: protectedProcedure
+      .input(z.object({ id: z.number() }))
+      .mutation(async ({ ctx, input }) => {
+        const models = await getAllAiModels();
+        const model = models.find(m => m.id === input.id);
+        if (!model) {
+          throw new TRPCError({ code: "NOT_FOUND", message: "AI model not found" });
+        }
+
+        const result = await checkModelHealth(model.slug, model.endpointUrl);
+
+        // Persist to DB
+        await updateAiModel(model.id, {
+          status: result.status as any,
+          lastActive: result.lastActive ?? model.lastActive,
+          recentOutput: result.recentOutput ?? model.recentOutput,
+        });
+
+        await logAction(ctx, "AI_HEALTH_CHECK", `ai:${model.id}`, `${model.name}: ${result.status}`);
+
+        return {
+          slug: result.slug,
+          status: result.status,
+          lastActive: result.lastActive,
+          responseTimeMs: result.responseTimeMs,
+          recentOutput: result.recentOutput,
+          checkedVia: result.checkedVia,
+        };
       }),
   }),
 

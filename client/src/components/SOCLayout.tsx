@@ -14,7 +14,8 @@ const navItems = [
   { href: "/", label: "Dashboard", icon: LayoutDashboard },
   { href: "/components", label: "Components", icon: Shield },
   { href: "/soar", label: "SOAR Panel", icon: Zap },
-  { href: "/ai-models", label: "AI Models", icon: Brain },
+  { href: "/ai-models", label: "AI Models Health", icon: Activity },
+  { href: "/ai-feed", label: "AI Threat Feed", icon: Brain },
 ];
 
 const adminNavItems = [

@@ -59,6 +59,12 @@ const defaults = [
     description: "SSH username for connecting to the SOAR host",
   },
   {
+    key: "ssh_port",
+    value: "2222",
+    label: "SSH Port",
+    description: "SSH port for VirtualBox host (default: 2222 via port forwarding)",
+  },
+  {
     key: "notification_email",
     value: "",
     label: "Notification Email",
