@@ -43,6 +43,13 @@
       "when": 1776966157282,
       "tag": "0005_chubby_microbe",
       "breakpoints": true
+    },
+    {
+      "idx": 6,
+      "version": "5",
+      "when": 1777156874105,
+      "tag": "0006_woozy_professor_monster",
+      "breakpoints": true
     }
   ]
 }

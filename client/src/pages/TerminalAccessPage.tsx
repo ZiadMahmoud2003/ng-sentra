@@ -5,15 +5,22 @@ import {
   ArrowLeft, Copy, Check, Terminal, AlertCircle, Zap, Monitor, X
 } from "lucide-react";
 import { useState } from "react";
-import { useLocation } from "wouter";
+import { useLocation, useParams } from "wouter";
 import { toast } from "sonner";
 import { trpc } from "@/lib/trpc";
 import WebTerminal from "@/components/WebTerminal";
 
 export default function TerminalAccessPage() {
   const [, navigate] = useLocation();
+  const params = useParams();
+  const slug = params?.slug;
+  const isSift = slug === "digital-forensics";
+  
   const [copied, setCopied] = useState(false);
-  const [useEmbeddedTerminal, setUseEmbeddedTerminal] = useState(false);
+  const [useEmbeddedTerminal, setUseEmbeddedTerminal] = useState(true);
+
+  const { data: components } = trpc.components.list.useQuery();
+  const component = components?.find(c => c.slug === slug);
 
   const { data: settings } = trpc.settings.list.useQuery();
   const { data: sshTestResult } = trpc.ssh.testConnection.useQuery();
@@ -27,7 +34,9 @@ export default function TerminalAccessPage() {
   const sshHost = sshSettings?.ssh_host ?? "192.168.1.14";
   const sshUser = sshSettings?.ssh_user ?? "ubuntu";
 
-  const sshCommand = `ssh ${sshUser}@${sshHost}`;
+  const sshCommand = component?.customCommand 
+    ? `ssh -t ${sshUser}@${sshHost} "${component.customCommand}"`
+    : `ssh ${sshUser}@${sshHost}`;
 
   const handleCopyCommand = (command: string) => {
     navigator.clipboard.writeText(command);
@@ -43,7 +52,7 @@ export default function TerminalAccessPage() {
         <div className="border-b border-border p-4 flex items-center justify-between">
           <div className="flex items-center gap-3">
             <Monitor className="w-5 h-5 text-primary" />
-            <h1 className="text-lg font-semibold text-foreground">Digital Forensics Workstation - SSH Terminal</h1>
+            <h1 className="text-lg font-semibold text-foreground">{component?.name || "Terminal Access"} - SSH Terminal</h1>
           </div>
           <Button
             variant="ghost"
@@ -57,7 +66,7 @@ export default function TerminalAccessPage() {
 
         {/* Terminal */}
         <div className="flex-1 overflow-hidden p-4">
-          <WebTerminal componentSlug="df-workstation" />
+          <WebTerminal componentSlug={slug || "df-workstation"} />
         </div>
       </div>
     );
@@ -80,10 +89,12 @@ export default function TerminalAccessPage() {
       <div className="space-y-2">
         <div className="flex items-center gap-3">
           <Monitor className="w-8 h-8 text-primary" />
-          <h1 className="text-2xl font-bold text-foreground">Digital Forensics Workstation</h1>
+          <h1 className="text-2xl font-bold text-foreground">
+            {component?.name || "Terminal Access"}
+          </h1>
         </div>
         <p className="text-sm text-muted-foreground">
-          Access the DF Workstation via SSH terminal for forensic analysis and investigation.
+          {component?.description || "Access the component via SSH terminal."}
         </p>
       </div>
 
@@ -126,8 +137,8 @@ export default function TerminalAccessPage() {
 
           <div className="space-y-2">
             <span className="text-xs font-mono text-muted-foreground">Connection Command</span>
-            <div className="flex items-center gap-2 bg-muted/30 border border-border rounded px-3 py-2">
-              <code className="font-mono text-xs text-primary flex-1">{sshCommand}</code>
+            <div className="flex items-center gap-2 bg-muted/30 border border-border rounded px-3 py-2 overflow-x-auto">
+              <code className="font-mono text-xs text-primary whitespace-nowrap">{sshCommand}</code>
               <Button
                 variant="ghost"
                 size="sm"
@@ -192,7 +203,9 @@ export default function TerminalAccessPage() {
               <div>
                 <p className="text-sm font-medium text-foreground">Access the Workstation</p>
                 <p className="text-xs text-muted-foreground mt-1">
-                  Once connected, you'll have full terminal access to the DF Workstation for forensic analysis.
+                  {isSift 
+                    ? "Once connected, you'll be inside the SIFT forensics Docker container as root."
+                    : "Once connected, you'll have full terminal access to the workstation."}
                 </p>
               </div>
             </li>
@@ -216,7 +229,7 @@ export default function TerminalAccessPage() {
             <strong>Common DF Tools Available:</strong> Volatility, Autopsy, Sleuth Kit, strings, hexdump, and more.
           </p>
           <p>
-            <strong>Forensic Evidence Location:</strong> Check /home/{sshUser}/forensics/ or /opt/forensics/ for evidence storage.
+            <strong>Forensic Evidence Location:</strong> Mounted volumes at <code>/evidence</code> and <code>/output</code> inside the SIFT container.
           </p>
           <p>
             <strong>Need Help?</strong> Contact your SOC administrator for access troubleshooting or tool-specific guidance.

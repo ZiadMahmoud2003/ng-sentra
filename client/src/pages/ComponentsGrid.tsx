@@ -36,13 +36,13 @@ const accessTypeConfig: Record<string, {
     label: "Config Files",
     badgeClass: "bg-orange-500/20 text-orange-400 border-orange-500/30",
     hint: "Managed via SSH / configuration files",
-    canOpen: false,
+    canOpen: true,
   },
   terminal: {
     label: "Terminal / SSH",
     badgeClass: "bg-purple-500/20 text-purple-400 border-purple-500/30",
     hint: "Accessed via terminal or SSH",
-    canOpen: false,
+    canOpen: true,
   },
   service: {
     label: "Background Service",
@@ -72,7 +72,7 @@ export default function ComponentsGrid() {
 
   // ── Edit config state ──
   const [editingComponent, setEditingComponent] = useState<any>(null);
-  const [editForm, setEditForm] = useState({ url: "", port: "", description: "" });
+  const [editForm, setEditForm] = useState({ url: "", port: "", description: "", customCommand: "" });
 
   const updateComponentMutation = trpc.components.update.useMutation({
     onSuccess: () => {
@@ -90,6 +90,7 @@ export default function ComponentsGrid() {
       url: comp.url || "",
       port: comp.port ? String(comp.port) : "",
       description: comp.description || "",
+      customCommand: comp.customCommand || "",
     });
   };
 
@@ -99,7 +100,8 @@ export default function ComponentsGrid() {
       id: editingComponent.id,
       url: editForm.url || undefined,
       port: editForm.port ? parseInt(editForm.port, 10) : null,
-      description: editForm.description || undefined
+      description: editForm.description || undefined,
+      customCommand: editForm.customCommand || undefined
     });
   };
 
@@ -107,6 +109,14 @@ export default function ComponentsGrid() {
   const visibleComponents = components ?? [];
 
   const handleClick = (comp: any) => {
+    if (comp.accessType === "terminal") {
+      navigate(`/terminal/${comp.slug}`);
+      return;
+    }
+    if (comp.accessType === "config-file") {
+      navigate(`/config/${comp.slug}`);
+      return;
+    }
     const cfg = accessTypeConfig[comp.accessType ?? "iframe"];
     if (cfg?.canOpen) navigate(`/components/${comp.slug}`);
   };
@@ -238,9 +248,28 @@ export default function ComponentsGrid() {
                         </p>
                       </div>
                     )}
-                    {(comp.accessType === "terminal" || comp.accessType === "config-file") && (
+                    {comp.accessType === "terminal" && (
                       <div className="flex-1">
-                        <OpenSSHButton componentId={comp.id} size="sm" />
+                        <Button 
+                          onClick={(e) => { e.stopPropagation(); navigate(`/terminal/${comp.slug}`); }} 
+                          size="sm" 
+                          className="w-full gap-2 bg-blue-600 hover:bg-blue-700 text-white shadow-md shadow-blue-900/20"
+                        >
+                          <Terminal className="w-4 h-4" />
+                          Open Terminal
+                        </Button>
+                      </div>
+                    )}
+                    {comp.accessType === "config-file" && (
+                      <div className="flex-1">
+                        <Button 
+                          onClick={(e) => { e.stopPropagation(); navigate(`/config/${comp.slug}`); }} 
+                          size="sm" 
+                          className="w-full gap-2 bg-amber-600 hover:bg-amber-700 text-white shadow-md shadow-amber-900/20"
+                        >
+                          <Edit className="w-4 h-4" />
+                          Open Editor
+                        </Button>
                       </div>
                     )}
                   </div>
@@ -304,6 +333,18 @@ export default function ComponentsGrid() {
                 className="bg-background/50 border-border text-sm min-h-[80px]"
               />
             </div>
+            {(editingComponent?.accessType === "terminal" || editingComponent?.accessType === "config-file") && (
+              <div className="space-y-2">
+                <Label htmlFor="cmd" className="text-xs font-mono uppercase tracking-wider text-muted-foreground">Custom SSH/Docker Command</Label>
+                <Input
+                  id="cmd"
+                  value={editForm.customCommand}
+                  onChange={(e) => setEditForm(f => ({ ...f, customCommand: e.target.value }))}
+                  placeholder="e.g. docker exec -it snort /bin/bash"
+                  className="bg-background/50 border-border font-mono text-sm"
+                />
+              </div>
+            )}
           </div>
           <DialogFooter>
             <Button variant="outline" onClick={() => setEditingComponent(null)}>Cancel</Button>

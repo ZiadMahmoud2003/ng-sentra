@@ -30,7 +30,7 @@ export default function ConfigFileViewer() {
   const slug = params.slug;
   const [, navigate] = useLocation();
   const [copied, setCopied] = useState(false);
-  const [useEmbeddedTerminal, setUseEmbeddedTerminal] = useState(false);
+  const [useEmbeddedTerminal, setUseEmbeddedTerminal] = useState(true);
 
   const { data: components } = trpc.components.list.useQuery();
   const { data: settings } = trpc.settings.list.useQuery();
@@ -51,7 +51,9 @@ export default function ConfigFileViewer() {
   const sshHost = sshSettings?.ssh_host ?? "192.168.1.14";
   const sshUser = sshSettings?.ssh_user ?? "ubuntu";
 
-  const sshCommand = `ssh ${sshUser}@${sshHost}`;
+  const sshCommand = component?.customCommand
+    ? `ssh -t ${sshUser}@${sshHost} "${component.customCommand}"`
+    : `ssh ${sshUser}@${sshHost}`;
   const scpCommand = `scp ${sshUser}@${sshHost}:${configInfo?.path} ./`;
 
   const handleCopyCommand = (command: string) => {
@@ -96,7 +98,7 @@ export default function ConfigFileViewer() {
 
         {/* Terminal */}
         <div className="flex-1 overflow-hidden p-4">
-          <WebTerminal componentSlug={slug} filePath={configInfo.path} />
+          <WebTerminal componentSlug={slug} />
         </div>
       </div>
     );
@@ -217,7 +219,7 @@ export default function ConfigFileViewer() {
           {/* Edit Instructions */}
           <div className="rounded-lg bg-blue-500/5 border border-blue-500/20 p-3">
             <p className="text-xs text-blue-300/80">
-              <strong>To edit the config file:</strong> Click "Open Terminal" below to launch an interactive SSH editor, or download it using the SCP command above, edit it locally, then upload it back using:
+              <strong>To edit the config file:</strong> Click "Open Terminal" below to launch an interactive SSH terminal, where you can type <code>nano {configInfo.path}</code>. Or download it using the SCP command above, edit it locally, then upload it back using:
             </p>
             <div className="mt-2 flex items-center gap-2 bg-muted/30 border border-border rounded px-3 py-2 font-mono text-xs">
               <span className="text-primary flex-1">scp ./{slug}.conf {sshUser}@{sshHost}:{configInfo.path}</span>

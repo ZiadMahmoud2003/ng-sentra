@@ -1,6 +1,6 @@
 import { and, desc, eq, gte, like, lte, sql } from "drizzle-orm";
 import { drizzle } from "drizzle-orm/mysql2";
-import { createPool, type PoolOptions } from "mysql2";
+import type { PoolOptions } from "mysql2";
 import { AiModel, AuditLog, Component, InsertAiModel, InsertAuditLog, InsertComponent, InsertSoarApproach, InsertUser, SoarApproach, SystemSetting, User, SshCredential, InsertSshCredential, WazuhSetting, InsertWazuhSetting, aiModels, auditLogs, components, soarApproaches, systemSettings, users, sshCredentials, wazuhSettings } from "../drizzle/schema";
 import { ENV } from './_core/env';
 
@@ -66,11 +66,9 @@ function toPoolOptions(databaseUrl: string): PoolOptions {
 }
 
 export async function getDb() {
-  if (!_db && !_dbInitAttempted && ENV.databaseUrl) {
-    _dbInitAttempted = true;
+  if (!_db && process.env.DATABASE_URL) {
     try {
-      const pool = createPool(toPoolOptions(ENV.databaseUrl));
-      _db = drizzle({ client: pool });
+      _db = drizzle({ connection: toPoolOptions(process.env.DATABASE_URL) });
     } catch (error) {
       console.warn("[Database] Failed to connect:", error);
       _db = null;

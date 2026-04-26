@@ -1,0 +1,1 @@
+ALTER TABLE `components` ADD `customCommand` varchar(512);

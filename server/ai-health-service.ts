@@ -135,7 +135,7 @@ async function probeSystemdService(
     const timeout = setTimeout(() => {
       conn.end();
       resolve(null);
-    }, 8000);
+    }, 30000);
 
     conn.on("ready", () => {
       // Check systemd status and get recent journal output
@@ -200,7 +200,7 @@ async function probeSystemdService(
       port: sshConfig.port,
       username: sshConfig.user,
       password: sshConfig.password,
-      readyTimeout: 6000,
+      readyTimeout: 20000,
     });
   });
 }
@@ -221,7 +221,7 @@ async function probeDockerContainer(
     const timeout = setTimeout(() => {
       conn.end();
       resolve(null);
-    }, 8000);
+    }, 30000);
 
     conn.on("ready", () => {
       // Check docker status and get recent logs. Use sudo -S with password since it's non-interactive
@@ -281,7 +281,7 @@ async function probeDockerContainer(
       port: sshConfig.port,
       username: sshConfig.user,
       password: sshConfig.password,
-      readyTimeout: 6000,
+      readyTimeout: 20000,
     });
   });
 }

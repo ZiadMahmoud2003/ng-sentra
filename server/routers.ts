@@ -81,6 +81,7 @@ export const appRouter = router({
         port: z.number().nullable().optional(),
         description: z.string().optional(),
         enabled: z.boolean().optional(),
+        customCommand: z.string().optional(),
       }))
       .mutation(async ({ ctx, input }) => {
         const { id, ...data } = input;
